@@ -1,0 +1,23 @@
+{
+  "development": {
+    "username": "finUser",
+    "password": "Fg01032003!",
+    "database": "fincontrol",
+    "host": "127.0.0.1",
+    "dialect": "mysql"
+  },
+  "test": {
+    "username": "finUser",
+    "password": "Fg01032003!",
+    "database": "fincontrol_test",
+    "host": "127.0.0.1",
+    "dialect": "mysql"
+  },
+  "production": {
+    "username": "finUser",
+    "password": "Fg01032003!",
+    "database": "fincontrol_prod",
+    "host": "127.0.0.1",
+    "dialect": "mysql"
+  }
+}
