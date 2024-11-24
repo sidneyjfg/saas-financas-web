@@ -7,18 +7,24 @@ export const RegisterPage = () => {
     name: "",
     email: "",
     password: "",
-    planId: "basic",
+    planId: 1, // ID padrão do plano básico
   });
+
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { id, value } = e.target;
-    setFormData({ ...formData, [id]: value });
+    setFormData({
+      ...formData,
+      [id]: id === "planId" ? Number(value) : value, // Converte planId para número
+    });
   };
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log("Sending data:", formData); // Log dos dados antes do envio
     try {
       await register(
         formData.name,
@@ -28,6 +34,7 @@ export const RegisterPage = () => {
       );
       navigate("/login");
     } catch (err) {
+      console.error("Registration error:", err.response?.data || err.message);
       setError(err.response?.data?.message || "An error occurred");
     }
   };
@@ -101,9 +108,10 @@ export const RegisterPage = () => {
               onChange={handleChange}
               className="w-full px-4 py-2 mt-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
             >
-              <option value="basic">Basic</option>
-              <option value="premium">Premium</option>
+              <option value={1}>Basic</option>
+              <option value={2}>Premium</option>
             </select>
+
           </div>
           <button
             type="submit"

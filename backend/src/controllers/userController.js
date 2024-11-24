@@ -8,7 +8,10 @@ class UserController {
     if (!name || !email || !password || !planId) {
       return res.status(422).json({ error: "All fields are required" });
     }
-
+    // Certifique-se de que o planId é um número
+    if (typeof planId !== "number") {
+      return res.status(400).json({ error: "Invalid plan ID" });
+    }
     try {
       const user = await userService.register({ name, email, password, planId });
       return res.status(201).json({ message: "User registered successfully", user });

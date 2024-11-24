@@ -10,6 +10,7 @@ export const login = async (email, password) => {
 
 export const register = async (name, email, password, planId) => {
   const response = await api.post("/users/register", { name, email, password, planId });
+  console.log(`Dados response Register: ${response.data}`);
   return response.data;
 };
 
