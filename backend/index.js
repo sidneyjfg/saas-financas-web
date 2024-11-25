@@ -3,8 +3,10 @@ const express = require('express');
 const cors = require("cors"); 
 const db = require('./src/models'); // Importa a instância configurada do Sequelize
 const userRoutes = require("./src/routes/userRoutes");
+const categoryRoutes = require('./src/routes/categoryRoutes');
 const transactionRoutes = require('./src/routes/transactionRoutes');
 const premiumFeatureRoutes = require("./src/routes/premiumFeatureRoutes");
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -34,6 +36,7 @@ app.get('/', (req, res) => {
 app.use("/api/users", userRoutes);
 app.use("/api/premium-feature", premiumFeatureRoutes);
 app.use('/api/transactions', transactionRoutes);
+app.use('/api/categories', categoryRoutes);
 
 // Iniciar servidor apenas se não for ambiente de teste
 if (process.env.NODE_ENV !== 'test') {

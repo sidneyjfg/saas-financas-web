@@ -1,5 +1,5 @@
 import { Routes, Route } from "react-router-dom";
-import { HomePage, AboutPage, ServicesPage, PricingPage, ReportsPage, GoalsPage, LoginPage, RegisterPage, TeamManagement } from "./pages/";
+import { HomePage, AboutPage, ServicesPage, PricingPage, ReportsPage, GoalsPage, LoginPage, RegisterPage, TeamManagement, CategoriesPage } from "./pages/";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 
@@ -26,7 +26,15 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-
+      <Route
+        path="/categories"
+        element={
+          <ProtectedRoute>
+            <CategoriesPage />
+          </ProtectedRoute>
+        }
+      />
+      
       <Route
         path="/goals"
         element={

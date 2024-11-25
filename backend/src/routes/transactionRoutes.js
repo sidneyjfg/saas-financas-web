@@ -7,7 +7,7 @@ const router = express.Router();
 // Relatórios mensais básicos (acessível por usuários Básicos e Premium)
 router.get(
   '/monthly',
-  authenticate, 
+  authenticate,
   planMiddleware("Basic"), // Permite usuários Básicos e Premium
   transactionController.getMonthlyReport
 );
@@ -15,7 +15,7 @@ router.get(
 // Listagem de transações (acessível por usuários Básicos e Premium)
 router.get(
   '/',
-  authenticate, 
+  authenticate,
   planMiddleware("Basic"), // Permite usuários Básicos e Premium
   transactionController.getTransactions
 );
