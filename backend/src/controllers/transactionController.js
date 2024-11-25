@@ -22,8 +22,8 @@ class TransactionController {
       const transactions = await transactionService.getTransactions(userId);
       return res.status(200).json(transactions);
     } catch (error) {
-      console.error('Error fetching transactions:', error.message);
-      return res.status(500).json({ error: 'Error fetching transactions' });
+      console.error('Erro ao listar transações:', error.message);
+      return res.status(500).json({ error: 'Erro ao listar transações.' });
     }
   }
 
@@ -45,15 +45,74 @@ class TransactionController {
     const userId = req.user.id;
 
     try {
-        const exportFile = await transactionService.exportToCSV(userId); // Função no serviço
-        res.setHeader("Content-Disposition", "attachment; filename=basic_transactions.csv");
-        res.setHeader("Content-Type", "text/csv");
-        return res.status(200).send(exportFile);
+      const exportFile = await transactionService.exportToCSV(userId); // Função no serviço
+      res.setHeader("Content-Disposition", "attachment; filename=basic_transactions.csv");
+      res.setHeader("Content-Type", "text/csv");
+      return res.status(200).send(exportFile);
     } catch (error) {
-        console.error('Error exporting basic transactions:', error.message);
-        return res.status(500).json({ error: 'Error exporting transactions' });
+      console.error('Error exporting basic transactions:', error.message);
+      return res.status(500).json({ error: 'Error exporting transactions' });
     }
-}
+  }
+  async create(req, res) {
+    const userId = req.user.id;
+    const { date, type, amount, description, categoryId } = req.body;
+
+    if (!date || !type || !amount) {
+      return res.status(400).json({ error: 'Data, tipo e valor são obrigatórios.' });
+    }
+
+    try {
+      const transaction = await transactionService.createTransaction({
+        date,
+        type,
+        amount,
+        description,
+        categoryId,
+        userId,
+      });
+      return res.status(201).json(transaction);
+    } catch (error) {
+      console.error('Erro ao criar transação:', error.message);
+      return res.status(500).json({ error: 'Erro ao criar transação.' });
+    }
+  }
+
+  // Atualizar transação
+  async update(req, res) {
+    const userId = req.user.id;
+    const { id } = req.params;
+    const { date, type, amount, description, categoryId } = req.body;
+
+    try {
+      const transaction = await transactionService.updateTransaction(id, {
+        date,
+        type,
+        amount,
+        description,
+        categoryId,
+        userId,
+      });
+      return res.status(200).json(transaction);
+    } catch (error) {
+      console.error('Erro ao atualizar transação:', error.message);
+      return res.status(500).json({ error: 'Erro ao atualizar transação.' });
+    }
+  }
+
+  // Excluir transação
+  async delete(req, res) {
+    const userId = req.user.id;
+    const { id } = req.params;
+
+    try {
+      await transactionService.deleteTransaction(id, userId);
+      return res.status(200).json({ message: 'Transação excluída com sucesso.' });
+    } catch (error) {
+      console.error('Erro ao excluir transação:', error.message);
+      return res.status(500).json({ error: 'Erro ao excluir transação.' });
+    }
+  }
 
 
 

@@ -4,6 +4,17 @@ const authenticate = require("../middlewares/authenticate");
 const planMiddleware = require("../middlewares/planMiddleware");
 const router = express.Router();
 
+
+
+// Criar transação
+router.post('/', authenticate, transactionController.create);
+
+// Atualizar transação
+router.put('/:id', authenticate, transactionController.update);
+
+// Excluir transação
+router.delete('/:id', authenticate, transactionController.delete);
+
 // Relatórios mensais básicos (acessível por usuários Básicos e Premium)
 router.get(
   '/monthly',

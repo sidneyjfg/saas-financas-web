@@ -1,0 +1,97 @@
+1. Relatórios Avançados
+Descrição:
+Adicionar a capacidade de gerar relatórios mais detalhados, incluindo filtros dinâmicos (por categoria, data, tipo de transação, etc.) e exportação de relatórios.
+Tarefas:
+Criar filtros na interface para selecionar categorias, intervalos de datas e tipos de transação.
+Adicionar funcionalidade de exportação para PDF/Excel (usando bibliotecas como jspdf ou xlsx).
+Exibir gráficos adicionais, como:
+Gráfico de pizza para a proporção de categorias de despesas.
+Gráfico de linha para evolução do saldo mensal.
+Dependência:
+Dados de transações e categorias já implementados.
+
+
+2. Funcionalidade de Categorias
+Descrição:
+Permitir que o usuário gerencie categorias (criar, editar e excluir).
+Tarefas:
+Criar uma tela para gerenciamento de categorias.
+Adicionar um botão para associar categorias às transações ao criar/editar.
+Implementar validações para evitar duplicação de categorias.
+Dependência:
+O modelo de categorias já está sendo usado, mas falta interface de gerenciamento.
+
+
+3. Planejamento de Metas Financeiras
+Descrição:
+Introduzir a funcionalidade para que os usuários criem metas financeiras.
+Exemplo: "Economizar R$ 5.000 até dezembro de 2024".
+Tarefas:
+Criar uma tabela goals no banco de dados para armazenar metas.
+Implementar uma interface para criar metas (definindo nome, valor e prazo).
+Exibir o progresso da meta em tempo real no painel principal (ex.: barra de progresso).
+Dependência:
+Relatórios básicos funcionando (para cruzar dados e calcular o progresso das metas).
+
+
+4. Integração Bancária
+Descrição:
+Conectar o sistema a APIs bancárias (ex.: Open Banking, Plaid, etc.) para importar transações automaticamente.
+Tarefas:
+Implementar autenticação segura para acesso às contas bancárias.
+Sincronizar transações bancárias automaticamente no sistema.
+Permitir a categorização manual ou automática das transações importadas.
+Dependência:
+Funcionalidade básica de transações deve estar 100% estável.
+
+
+5. Alertas e Notificações
+Descrição:
+Notificar o usuário sobre eventos importantes, como:
+"Sua despesa mensal ultrapassou 80% do orçamento."
+"Você atingiu 50% da sua meta financeira."
+Tarefas:
+Implementar um sistema de notificações no frontend (usando bibliotecas como react-toastify).
+Adicionar lógica no backend para disparar alertas com base nos dados (usando CRON para verificações automáticas).
+Dependência:
+Relatórios e metas financeiras devem estar funcionando.
+
+
+6. Multiusuário (Premium)
+Descrição:
+Adicionar suporte para equipes/famílias, permitindo que múltiplos usuários compartilhem dados financeiros.
+Tarefas:
+Criar relacionamentos no banco para associar transações e categorias a grupos de usuários.
+Implementar permissões de acesso (ex.: administrador, colaborador).
+Ajustar todas as telas para suportar dados compartilhados.
+Dependência:
+Relatórios e transações devem estar bem organizados e modularizados.
+
+
+7. Painel de Controle com Insights
+Descrição:
+Criar um painel inicial que exiba insights financeiros, como:
+Saldo mensal total (receitas - despesas).
+Categorias com maior gasto.
+Progresso de metas.
+Tarefas:
+Adicionar uma nova rota para o painel principal.
+Exibir gráficos e KPIs (indicadores-chave de desempenho) em uma interface limpa e moderna.
+Dependência:
+Relatórios e metas financeiras devem estar implementados.
+Sugestão de Ordem de Implementação
+Funcionalidade de Categorias:
+Prioritário, pois permite que os usuários organizem suas transações.
+Relatórios Avançados:
+Expande os relatórios existentes, adicionando mais valor para o usuário.
+Planejamento de Metas Financeiras:
+Oferece funcionalidades novas e motivadoras para os usuários.
+Integração Bancária:
+Funcionalidade robusta que aumenta a automação e a precisão.
+Alertas e Notificações:
+Melhora a experiência do usuário com interatividade.
+Multiusuário (Premium):
+Funcionalidade avançada para diferenciação de planos.
+Painel de Controle com Insights:
+Oferece um resumo visual do estado financeiro do usuário.
+Se precisar de ajuda para começar a próxima funcionalidade ou criar mais detalhes técnicos, é só pedir!

@@ -22,6 +22,11 @@ const AuthNavbar = () => {
           </NavLink>
         </li>
         <li>
+          <NavLink to="/transactions" className="text-sm text-gray-600 hover:text-teal-600 transition duration-300">
+            Transactions
+          </NavLink>
+        </li>
+        <li>
           <NavLink to="/categories" className="text-sm text-gray-600 hover:text-teal-600 transition duration-300">
             Categories
           </NavLink>

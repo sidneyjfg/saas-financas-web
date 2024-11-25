@@ -8,3 +8,4 @@ export { LoginPage } from "./LoginPage";
 export { RegisterPage } from "./RegisterPage";
 export { TeamManagement } from "./TeamManagement";
 export { CategoriesPage } from "./CategoriesPage";
+export { TransactionsPage } from "./TransactionsPage";

@@ -1,16 +1,15 @@
-const { Transaction, Sequelize } = require('../models');
+const { Transaction, Category, Sequelize } = require('../models');
 
 class TransactionRepository {
   // Busca todas as transações de um usuário
   async findAllByUser(userId) {
-    console.log('findAllByUser called with userId:', userId);
     return await Transaction.findAll({
       where: { userId },
       include: [
         {
-          model: Transaction.sequelize.models.Category,
-          as: 'category',
-          attributes: ['id', 'name'],
+          model: Category,
+          as: 'category', // Essa referência depende de o `Category` estar corretamente inicializado
+          attributes: ['id', 'name', 'color'],
         },
       ],
       order: [['date', 'DESC']],
@@ -72,22 +71,22 @@ class TransactionRepository {
     });
   }
 
-  // Adiciona uma nova transação
-  async create(transactionData) {
+   // Criar uma nova transação
+   async create(transactionData) {
     return await Transaction.create(transactionData);
   }
 
-  // Atualiza uma transação existente
+  // Atualizar uma transação existente
   async update(id, transactionData) {
     return await Transaction.update(transactionData, {
-      where: { id },
+      where: { id, userId: transactionData.userId },
     });
   }
 
-  // Exclui uma transação
-  async delete(id) {
+  // Excluir uma transação
+  async delete(id, userId) {
     return await Transaction.destroy({
-      where: { id },
+      where: { id, userId },
     });
   }
 }
