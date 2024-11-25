@@ -36,6 +36,32 @@ class TransactionRepository {
       ],
     });
   }
+  async getPremiumSummary(userId) {
+    return await Transaction.findAll({
+      where: { userId },
+      attributes: [
+        [Sequelize.fn('MONTH', Sequelize.col('date')), 'month'], // Mês da transação
+        [Sequelize.fn('YEAR', Sequelize.col('date')), 'year'],   // Ano da transação
+        'type',                                                 // Tipo (income/expense)
+        [Sequelize.col('category.id'), 'categoryId'],           // ID da categoria
+        [Sequelize.col('category.name'), 'categoryName'],       // Nome da categoria
+        'description',                                          // Descrição da transação
+        [Sequelize.fn('SUM', Sequelize.col('amount')), 'total'], // Soma dos valores
+      ],
+      include: [
+        {
+          model: Transaction.sequelize.models.Category,
+          as: 'category',
+          attributes: [], // Necessário apenas para JOIN
+        },
+      ],
+      group: ['year', 'month', 'type', 'category.id', 'category.name', 'description'], // Agrupamento detalhado
+      order: [
+        [Sequelize.fn('YEAR', Sequelize.col('date')), 'DESC'],
+        [Sequelize.fn('MONTH', Sequelize.col('date')), 'ASC'],
+      ],
+    });
+  }  
 
   // Adiciona uma nova transação
   async create(transactionData) {

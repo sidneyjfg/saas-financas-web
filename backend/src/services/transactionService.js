@@ -25,6 +25,22 @@ class TransactionService {
   async deleteTransaction(id) {
     return await transactionRepository.delete(id);
   }
+  async getPremiumSummary(userId) {
+    // Lógica para gerar resumo detalhado
+    return await transactionRepository.getPremiumSummary(userId);
+  }
+
+  async exportToCSV(userId) {
+    // Lógica para gerar CSV
+    const transactions = await transactionRepository.findAllByUser(userId);
+    let csv = "Date,Category,Type,Amount,Description\n";
+
+    transactions.forEach((t) => {
+      csv += `${t.date},${t.category.name},${t.type},${t.amount},${t.description || ""}\n`;
+    });
+
+    return csv;
+  }
 }
 
 module.exports = new TransactionService();

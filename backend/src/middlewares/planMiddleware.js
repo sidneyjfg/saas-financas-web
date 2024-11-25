@@ -1,11 +1,11 @@
-module.exports = (requiredFeature) => {
+module.exports = (requiredPlan) => {
   return (req, res, next) => {
-    const userPlan = req.user.plan; // Supondo que o plano do usuário está disponível no req.user
-
-    if (!userPlan.features.includes(requiredFeature)) {
-      return res.status(403).json({ error: "Access denied: Plan does not support this feature" });
+    console.log("Plano: ",req.user.plan);
+    console.log("Required Plano: ",requiredPlan);
+    const userPlan = req.user.plan; // O plano do usuário já está no middleware authenticate
+    if (userPlan !== requiredPlan && requiredPlan !== "Basic") {
+      return res.status(403).json({ error: "Access denied: Premium plan required" });
     }
-
     next();
   };
 };

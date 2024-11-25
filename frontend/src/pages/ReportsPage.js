@@ -1,19 +1,41 @@
 import React, { useEffect, useState } from "react";
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from "chart.js";
-import { Bar } from "react-chartjs-2";
+import { useAuth } from "../contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 import api from "../services/api";
+import PremiumReports from "../components/PremiumReports";
+import BasicReports from "../components/BasicReports";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+} from "chart.js";
 
-// Registre os componentes do Chart.js
+// Registre os componentes necessários do Chart.js
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 export const ReportsPage = () => {
+  const { userPlan } = useAuth(); // Pega o plano do usuário do contexto
+  const navigate = useNavigate();
   const [reportData, setReportData] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!userPlan) {
+      console.log("No user plan found. Redirecting...");
+      navigate("/signin"); // Redireciona se o plano do usuário não existir
+    }
+  }, [userPlan, navigate]);
+
+  useEffect(() => {
     const fetchReportData = async () => {
       try {
-        const response = await api.get("/transactions/monthly");
+        const endpoint = userPlan === "Basic" ? "/transactions/monthly" : "/transactions/premium/summary";
+        const response = await api.get(endpoint);
+        console.log("Report data:", response.data);
         setReportData(response.data);
       } catch (error) {
         console.error("Error fetching report data:", error);
@@ -23,7 +45,7 @@ export const ReportsPage = () => {
     };
 
     fetchReportData();
-  }, []);
+  }, [userPlan]);
 
   if (loading) {
     return <p className="text-center mt-6 text-gray-500">Loading...</p>;
@@ -33,58 +55,14 @@ export const ReportsPage = () => {
     return <p className="text-center mt-6 text-gray-500">No data available.</p>;
   }
 
-  // Prepara os dados do gráfico
-  const chartData = {
-    labels: [...new Set(reportData.map((item) => `${item.year}-${item.month}`))],
-    datasets: [
-      {
-        label: "Income",
-        data: reportData
-          .filter((item) => item.type === "income")
-          .map((item) => item.total),
-        backgroundColor: "rgba(34, 197, 94, 0.7)", // Verde claro
-        borderColor: "rgba(34, 197, 94, 1)",
-        borderWidth: 1,
-      },
-      {
-        label: "Expenses",
-        data: reportData
-          .filter((item) => item.type === "expense")
-          .map((item) => item.total),
-        backgroundColor: "rgba(239, 68, 68, 0.7)", // Vermelho claro
-        borderColor: "rgba(239, 68, 68, 1)",
-        borderWidth: 1,
-      },
-    ],
-  };
-
-  const options = {
-    responsive: true,
-    plugins: {
-      legend: {
-        position: "top",
-      },
-      tooltip: {
-        enabled: true,
-        callbacks: {
-          label: function (context) {
-            // Garante que o valor seja convertido para número antes de usar toFixed
-            const value = Number(context.raw) || 0;
-            return `${context.dataset.label}: $${value.toFixed(2)}`;
-          },
-        },
-      },
-    },
-  };
-  
-
   return (
-    <div className="p-6">
-      <h1 className="text-3xl font-bold text-center text-gray-800 mb-8">
-        Financial Reports
-      </h1>
-      <div className="max-w-4xl mx-auto">
-        <Bar data={chartData} options={options} />
+    <div className="flex justify-center items-center min-h-screen bg-gray-100 p-6">
+      <div className="w-full max-w-6xl bg-white rounded-lg shadow-lg p-6">
+        {userPlan === "Premium" ? (
+          <PremiumReports data={reportData} />
+        ) : (
+          <BasicReports data={reportData} />
+        )}
       </div>
     </div>
   );
