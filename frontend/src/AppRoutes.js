@@ -18,8 +18,24 @@ function AppRoutes() {
       <Route path="/pricing" element={<PricingPage />} />
 
       {/* Navegação do sistema */}
-      <Route path="/reports" element={<ReportsPage />} />
-      <Route path="/goals" element={<GoalsPage />} />
+      <Route
+        path="/reports"
+        element={
+          <ProtectedRoute>
+            <ReportsPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/goals"
+        element={
+          <ProtectedRoute>
+            <GoalsPage />
+          </ProtectedRoute>
+        }
+      />
+
       <Route
         path="/team-management"
         element={
