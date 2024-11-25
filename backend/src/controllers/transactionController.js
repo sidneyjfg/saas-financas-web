@@ -45,15 +45,18 @@ class TransactionController {
     const userId = req.user.id;
 
     try {
-      const exportFile = await transactionService.exportToCSV(userId);
-      res.setHeader("Content-Disposition", "attachment; filename=transactions.csv");
-      res.setHeader("Content-Type", "text/csv");
-      return res.status(200).send(exportFile);
+        const exportFile = await transactionService.exportToCSV(userId); // Função no serviço
+        res.setHeader("Content-Disposition", "attachment; filename=basic_transactions.csv");
+        res.setHeader("Content-Type", "text/csv");
+        return res.status(200).send(exportFile);
     } catch (error) {
-      console.error('Error exporting transactions:', error.message);
-      return res.status(500).json({ error: 'Error exporting transactions' });
+        console.error('Error exporting basic transactions:', error.message);
+        return res.status(500).json({ error: 'Error exporting transactions' });
     }
-  }
+}
+
+
+
 }
 
 module.exports = new TransactionController();

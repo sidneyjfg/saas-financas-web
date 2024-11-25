@@ -35,4 +35,12 @@ router.get(
   transactionController.exportTransactions // Controlador para exportar relatórios
 );
 
+router.get(
+  "/basic/export",
+  authenticate,
+  planMiddleware("Basic"),
+  transactionController.exportTransactions // Exporta transações para CSV
+);
+
+
 module.exports = router;
