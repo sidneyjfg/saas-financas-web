@@ -73,21 +73,21 @@ export const ReportsPage = () => {
 
     return (
         <div className="flex flex-col items-center min-h-screen bg-gray-100 p-6">
-            <div className="w-full max-w-6xl bg-white rounded-lg shadow-lg p-6">
-                {userPlan === "Premium" ? (
-                    <PremiumReports data={reportData} />
-                ) : (
-                    <BasicReports data={reportData} />
-                )}
-                <div className="mt-4 text-right">
-                    <button
-                        onClick={handleExportCSV}
-                        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-                    >
-                        Export to CSV
-                    </button>
-                </div>
-            </div>
+          <div className="w-full max-w-8xl bg-white rounded-lg shadow-lg p-6">
+            {/* Exibe relatórios baseados no plano */}
+            {userPlan === "Premium" ? (
+              <PremiumReports data={reportData} />
+            ) : (
+              <BasicReports data={reportData} />
+            )}
+            <button
+              onClick={handleExportCSV}
+              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 shadow-md transition duration-200"
+            >
+              Export to CSV
+            </button>
+          </div>
         </div>
-    );
+      );
+      
 };
