@@ -20,17 +20,24 @@ const BasicReports = ({ data }) => {
   });
 
   useEffect(() => {
-    // Recalcula os totais de Income e Expense com base nos dados filtrados
+    // Verifica se os dados foram alterados antes de atualizar o estado
     const totalIncome = filteredData
       .filter((item) => item.type === "income")
       .reduce((acc, item) => acc + parseFloat(item.total), 0);
-
+  
     const totalExpense = filteredData
       .filter((item) => item.type === "expense")
       .reduce((acc, item) => acc + parseFloat(item.total), 0);
-
-    setSummary({ totalIncome, totalExpense });
+  
+    // Atualiza o resumo somente se os valores mudarem
+    setSummary((prevSummary) => {
+      if (prevSummary.totalIncome !== totalIncome || prevSummary.totalExpense !== totalExpense) {
+        return { totalIncome, totalExpense };
+      }
+      return prevSummary; // Evita atualizações desnecessárias
+    });
   }, [filteredData]);
+  
 
   const categories = [...new Set(data.map((item) => item.categoryName))];
   const months = [...new Set(
@@ -67,7 +74,7 @@ const BasicReports = ({ data }) => {
 
   const options = {
     responsive: true,
-    animation: false, // Desabilita animações
+    animation: true, // Desabilita animações
     plugins: {
       legend: { position: "top" },
       tooltip: {
