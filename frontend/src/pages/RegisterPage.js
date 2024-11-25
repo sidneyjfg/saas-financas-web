@@ -32,7 +32,7 @@ export const RegisterPage = () => {
         formData.password,
         formData.planId
       );
-      navigate("/login");
+      navigate("/signin");
     } catch (err) {
       console.error("Registration error:", err.response?.data || err.message);
       setError(err.response?.data?.message || "An error occurred");

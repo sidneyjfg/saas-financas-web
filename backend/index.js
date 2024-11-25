@@ -37,6 +37,7 @@ app.use("/api/premium-feature", premiumFeatureRoutes);
 if (process.env.NODE_ENV !== 'test') {
   app.listen(PORT, () => {
     console.log(`Servidor rodando na porta ${PORT}`);
+    console.log("Log de teste - console.log está funcionando!");
   });
 }
 

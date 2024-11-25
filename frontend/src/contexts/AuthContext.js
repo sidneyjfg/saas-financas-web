@@ -1,41 +1,52 @@
-import React, { createContext, useState, useEffect } from "react";
-import { login, getCurrentUser, logout } from "../services/authService";
+import { createContext, useState, useContext, useEffect } from "react";
+import api from "../services/api"; // Certifique-se de que este arquivo exporta o Axios configurado
 
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userPlan, setUserPlan] = useState(null);
 
-  // Função de login
   const signIn = async (email, password) => {
-    const response = await login(email, password);
-    setUser(response.user); // Atualiza o estado com o usuário logado
+    try {
+      console.log("Sending login request to backend... | ", email,password);
+      const response = await api.post("/users/login", { email, password }); // Chama o backend
+      const { token, plan } = response.data; // Extrai token e plano da resposta
+
+      console.log("Login successful, saving to context:", { token, plan });
+      setIsAuthenticated(true);
+      setUserPlan(plan);
+      localStorage.setItem("token", token); // Salva no localStorage
+      localStorage.setItem("userPlan", plan);
+    } catch (error) {
+      console.error("Login failed:", error.response?.data || error.message);
+      throw new Error(error.response?.data?.error || "Login failed");
+    }
   };
 
-  // Função de logout
   const signOut = () => {
-    logout();
-    setUser(null);
+    console.log("Signing out");
+    setIsAuthenticated(false);
+    setUserPlan(null);
+    localStorage.removeItem("token");
+    localStorage.removeItem("userPlan");
   };
 
-  // Buscar o usuário atual ao carregar a aplicação
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const userData = await getCurrentUser();
-        setUser(userData);
-      } catch {
-        logout();
-        setUser(null);
-      }
-    };
-
-    fetchUser();
+    const token = localStorage.getItem("token");
+    const plan = localStorage.getItem("userPlan");
+    console.log("Restoring from localStorage:", { token, plan });
+    if (token && plan) {
+      setIsAuthenticated(true);
+      setUserPlan(plan);
+    }
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, signIn, signOut }}>
+    <AuthContext.Provider value={{ isAuthenticated, userPlan, signIn, signOut }}>
       {children}
     </AuthContext.Provider>
   );
 };
+
+export const useAuth = () => useContext(AuthContext);

@@ -6,15 +6,17 @@ export const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
-  const { signIn } = useAuth(); // Certifique-se de que o hook está retornando corretamente
+  const { signIn } = useAuth(); // O signIn agora chama o backend
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await signIn(email, password);
-      navigate("/dashboard"); // Redireciona após login bem-sucedido
+      console.log("Submitting login form... | ",email,password);
+      await signIn(email, password); // Passa email e senha para o signIn
+      navigate("/reports"); // Redireciona após login bem-sucedido
     } catch (err) {
+      console.error("Login failed:", err.message);
       setError(err.message || "Login failed");
     }
   };
@@ -68,7 +70,7 @@ export const LoginPage = () => {
         </form>
         <p className="mt-6 text-sm text-center text-gray-600">
           Don't have an account?{" "}
-          <Link to="/register" className="text-teal-600 hover:underline">
+          <Link to="/signup" className="text-teal-600 hover:underline">
             Sign Up
           </Link>
         </p>

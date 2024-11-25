@@ -1,4 +1,4 @@
-const userService = require("../services/userService");
+const userService = require("../services/userService.js");
 
 class UserController {
   async register(req, res) {
@@ -10,7 +10,7 @@ class UserController {
     }
     // Certifique-se de que o planId é um número
     if (typeof planId !== "number") {
-      return res.status(400).json({ error: "Invalid plan ID" });
+      return res.status(400).json({ error: "planId must be a number" });
     }
     try {
       const user = await userService.register({ name, email, password, planId });
@@ -21,21 +21,28 @@ class UserController {
   }
 
   async login(req, res) {
+    console.log("UserController.login called with:", req.body);
+  
     const { email, password } = req.body;
-
-    // Validação dos campos obrigatórios
+  
     if (!email || !password) {
       return res.status(422).json({ error: "Email and password are required" });
     }
-
+  
     try {
-      const token = await userService.login({ email, password });
-      return res.status(200).json({ message: "Login successful", token });
+      const result = await userService.login({ email, password });
+      console.log("Login successful:", result);
+  
+      return res.status(200).json({
+        token: result.token, // Certifique-se de que o token está aqui
+        plan: result.user.plan, // Certifique-se de que o plano está aqui
+      });
     } catch (error) {
-      // Mensagem genérica para evitar exposição de detalhes
+      console.error("Login failed:", error.message);
       return res.status(400).json({ error: "Invalid email or password" });
     }
   }
+  
 }
 
 module.exports = new UserController();

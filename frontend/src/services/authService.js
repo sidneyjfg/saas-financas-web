@@ -1,10 +1,15 @@
 import api from "./api";
 
 export const login = async (email, password) => {
-  const response = await api.post("/users/login", { email, password });
-  if (response.data.token) {
-    localStorage.setItem("token", response.data.token);
+  console.log("Sending login request:", { email, password });
+
+  try {
+    const response = await api.post("/users/login", { email, password });
+    console.log("Login response:", response.data);
     return response.data;
+  } catch (error) {
+    console.error("Login error:", error.response?.data || error.message);
+    throw error;
   }
 };
 
@@ -16,6 +21,7 @@ export const register = async (name, email, password, planId) => {
 
 export const logout = () => {
   localStorage.removeItem("token");
+  localStorage.removeItem("userPlan"); // Remova o plano ao deslogar
 };
 
 export const getCurrentUser = async () => {

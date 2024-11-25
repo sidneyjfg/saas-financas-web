@@ -1,9 +1,9 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || "http://localhost:3000/api", // Ajuste a URL do backend
+  baseURL: "http://localhost:5000/api", // Ajuste a URL do backend
 });
-console.log(api.baseURL);
+
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
   if (token) {

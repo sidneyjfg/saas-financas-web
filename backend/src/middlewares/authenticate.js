@@ -1,6 +1,3 @@
-const jwt = require("jsonwebtoken");
-const { JWT_SECRET } = process.env;
-
 module.exports = (req, res, next) => {
   const authHeader = req.headers.authorization;
 
@@ -11,8 +8,13 @@ module.exports = (req, res, next) => {
   const [, token] = authHeader.split(" ");
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = decoded;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = {
+      id: decoded.id,
+      email: decoded.email,
+      name: decoded.name,
+      plan: decoded.plan, // Inclua o plano do usuário
+    };
     return next();
   } catch (err) {
     return res.status(401).json({ error: "Invalid token" });
