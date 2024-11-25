@@ -2,12 +2,18 @@ import React, { useState, useEffect } from "react";
 import api from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
 
+const CATEGORY_LIMITS = {
+  Basic: 5, // Limite de categorias para o plano básico
+  Premium: Infinity, // Sem limite para o plano Premium
+}; 
 export const CategoriesPage = () => {
   const { userPlan } = useAuth(); // Recupera o plano do usuário
   const [categories, setCategories] = useState([]);
   const [newCategory, setNewCategory] = useState({ name: "", color: "" });
   const [editingCategory, setEditingCategory] = useState(null);
   const [loading, setLoading] = useState(true);
+   
+  const remainingCategories = CATEGORY_LIMITS[userPlan] - categories.length;
 
   // Fetch categories from backend
   useEffect(() => {
@@ -31,7 +37,7 @@ export const CategoriesPage = () => {
   // Create or Update Category
   const handleSaveCategory = async () => {
     if (!newCategory.name.trim()) {
-      alert("O nome da categoria é obrigatório.");
+      alert("O nome da categoria é obrigatório.");//mudar pro toastfy dps
       return;
     }
 
@@ -42,7 +48,15 @@ export const CategoriesPage = () => {
       } else {
         // Create new category
         console.log(newCategory);
-        await api.post("/categories", newCategory);
+        try {
+          await api.post("/categories", newCategory);
+        } catch (error) {
+          if (error.response?.status === 400) {
+            alert(error.response.data.message);
+          } else {
+            console.error("Erro ao criar categoria:", error);
+          }
+        }
       }
 
       // Refresh categories
@@ -85,7 +99,9 @@ export const CategoriesPage = () => {
         <h1 className="text-3xl font-bold text-teal-600 text-center mb-8">
           Gerenciamento de Categorias ({userPlan} Plan)
         </h1>
-
+        <p>
+          Você tem {remainingCategories > 0 ? remainingCategories : 0} categorias restantes no plano {userPlan}.
+        </p>
         {/* Form */}
         <div className="bg-white p-6 shadow-lg rounded-lg mb-10">
           <h2 className="text-xl font-bold text-gray-700 mb-4">

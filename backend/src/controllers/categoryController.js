@@ -35,16 +35,21 @@ class CategoryController {
   // Criação de categoria (compartilhado)
   async create(req, res) {
     const userId = req.user.id;
+    const userPlan = req.user.plan; // Recuperado do middleware de autenticação
     const { name, color } = req.body;
-
+  
+    if (!name) {
+      return res.status(400).json({ message: "O nome da categoria é obrigatório." });
+    }
+  
     try {
-      const category = await categoryService.createCategory({ name, color, userId });
+      const category = await categoryService.createCategory({ name, color, userId, userPlan });
       return res.status(201).json(category);
     } catch (error) {
-      console.error('Error creating category:', error.message);
-      return res.status(500).json({ error: 'Error creating category' });
+      console.error("Erro ao criar categoria:", error.message);
+      return res.status(400).json({ message: error.message });
     }
-  }
+  }  
 
   // Atualização de categoria (compartilhado)
   async update(req, res) {

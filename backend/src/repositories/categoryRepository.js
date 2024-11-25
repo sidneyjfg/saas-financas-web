@@ -32,6 +32,12 @@ class CategoryRepository {
     });
   }
 
+  async countByUser(userId) {
+    return await Category.count({
+      where: { userId },
+    });
+  }
+  
   // Excluir uma categoria
   async delete(id, userId) {
     return await Category.destroy({
