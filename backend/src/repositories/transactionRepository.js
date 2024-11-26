@@ -80,12 +80,15 @@ class TransactionRepository {
       ],
     });
   }
-  async getTotalByCategory(categoryId) {
-    const total = await Transaction.sum('amount', {
-      where: { categoryId },
+  async getTotalByCategoryAndType(categoryId, type) {
+    const result = await Transaction.findAll({
+        where: { categoryId, type },
+        attributes: [[Sequelize.fn('SUM', Sequelize.col('amount')), 'total']],
     });
-    return total || 0;
-  }
+
+    return result[0]?.dataValues?.total || 0;
+}
+
 
 
   // Criar uma nova transação

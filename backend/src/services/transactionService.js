@@ -42,32 +42,42 @@ class TransactionService {
         return transaction;
     }
 
-    // Exclui uma transação
+    // Excluir uma transação
     async deleteTransaction(id, userId) {
         const transaction = await transactionRepository.findById(id);
-    
+
         if (!transaction) {
             throw new Error('Transação não encontrada');
         }
-    
+
         if (transaction.userId !== userId) {
             throw new Error('Usuário não autorizado a excluir esta transação');
         }
-    
-        return await transactionRepository.delete(id, userId);
+
+        await transactionRepository.delete(id, userId);
+
+        // Atualizar progresso da meta, se aplicável
+        if (transaction.categoryId) {
+            await this.updateGoalProgress(transaction.categoryId);
+        }
     }
-    
 
     // Atualiza o progresso da meta associada à categoria
     async updateGoalProgress(categoryId) {
-        const total = await transactionRepository.getTotalByCategory(categoryId);
+        // Obtém o total das transações por tipo para a categoria
+        const totalIncome = await transactionRepository.getTotalByCategoryAndType(categoryId, 'income');
+        const totalExpense = await transactionRepository.getTotalByCategoryAndType(categoryId, 'expense');
+
+        // Busca a meta vinculada à categoria
         const goal = await goalRepository.findByCategory(categoryId);
 
         if (goal) {
-            goal.progress = total;
+            // Atualiza o progresso da meta (somando receitas e subtraindo despesas)
+            goal.progress = totalIncome - totalExpense;
             await goal.save();
         }
     }
+
 
     async getPremiumSummary(userId) {
         return await transactionRepository.getPremiumSummary(userId);
