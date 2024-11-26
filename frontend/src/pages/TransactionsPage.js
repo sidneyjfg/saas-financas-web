@@ -17,7 +17,7 @@ export const TransactionsPage = () => {
     const [loading, setLoading] = useState(true);
     const [filters, setFilters] = useState({ type: "Todos", category: "" });
 
-    // Buscar Transações e Categorias
+    // Buscar Transações, Categorias e Metas
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -66,8 +66,8 @@ export const TransactionsPage = () => {
             console.log("Saiu dos if");
 
             // Recarregar dados após salvar
-            const response = await api.get("/transactions");
-            setTransactions(response.data);
+            const transactionsResponse = await api.get("/transactions");
+            setTransactions(transactionsResponse.data);
 
             // Resetar o formulário
             setNewTransaction({
@@ -102,6 +102,7 @@ export const TransactionsPage = () => {
             try {
                 await api.delete(`/transactions/${id}`);
                 setTransactions(transactions.filter((transaction) => transaction.id !== id));
+
             } catch (error) {
                 console.error("Erro ao excluir transação:", error);
             }
@@ -155,7 +156,7 @@ export const TransactionsPage = () => {
                             <option value="">Selecione uma Categoria</option>
                             {categories.map((category) => (
                                 <option key={category.id} value={category.id}>
-                                    {category.name} {/* O nome visível para o usuário */}
+                                    {category.name}
                                 </option>
                             ))}
                         </select>

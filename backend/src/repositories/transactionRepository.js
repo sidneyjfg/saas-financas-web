@@ -15,7 +15,17 @@ class TransactionRepository {
       order: [['date', 'DESC']],
     });
   }
-
+  async findById(id) {
+    return await Transaction.findByPk(id, {
+      include: [
+        {
+          model: Category,
+          as: 'category',
+          attributes: ['id', 'name', 'color'],
+        },
+      ],
+    });
+  }
   // Busca o resumo mensal agrupado por mês e tipo
   async getMonthlySummary(userId) {
     console.log('getMonthlySummary called with userId:', userId);
@@ -70,9 +80,16 @@ class TransactionRepository {
       ],
     });
   }
+  async getTotalByCategory(categoryId) {
+    const total = await Transaction.sum('amount', {
+      where: { categoryId },
+    });
+    return total || 0;
+  }
 
-   // Criar uma nova transação
-   async create(transactionData) {
+
+  // Criar uma nova transação
+  async create(transactionData) {
     return await Transaction.create(transactionData);
   }
 

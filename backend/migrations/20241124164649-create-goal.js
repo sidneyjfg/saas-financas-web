@@ -18,6 +18,16 @@ module.exports = {
         onUpdate: 'CASCADE',
         onDelete: 'CASCADE',
       },
+      categoryId: {
+        type: Sequelize.INTEGER,
+        references: {
+          model: 'categories',
+          key: 'id',
+        },
+        onUpdate: 'CASCADE',
+        onDelete: 'SET NULL',
+        allowNull: true, // O campo é opcional
+      },
       name: {
         type: Sequelize.STRING,
         allowNull: false,
@@ -29,6 +39,7 @@ module.exports = {
       progress: {
         type: Sequelize.DECIMAL,
         allowNull: true,
+        defaultValue: 0,
       },
       deadline: {
         type: Sequelize.DATE,

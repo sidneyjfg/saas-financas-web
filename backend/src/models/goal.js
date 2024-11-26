@@ -6,6 +6,9 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       // Um objetivo pertence a um usuário
       Goal.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
+
+      // Um objetivo pode estar vinculado a uma categoria
+      Goal.belongsTo(models.Category, { foreignKey: 'categoryId', as: 'category' });
     }
   }
 
@@ -18,6 +21,14 @@ module.exports = (sequelize, DataTypes) => {
           key: 'id',
         },
       },
+      categoryId: {
+        type: DataTypes.INTEGER,
+        references: {
+          model: 'categories',
+          key: 'id',
+        },
+        allowNull: true, // Categoria é opcional
+      },
       name: {
         type: DataTypes.STRING,
         allowNull: false,
@@ -29,6 +40,7 @@ module.exports = (sequelize, DataTypes) => {
       progress: {
         type: DataTypes.DECIMAL,
         allowNull: true,
+        defaultValue: 0,
       },
       deadline: {
         type: DataTypes.DATE,
