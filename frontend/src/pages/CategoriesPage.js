@@ -5,14 +5,14 @@ import { useAuth } from "../contexts/AuthContext";
 const CATEGORY_LIMITS = {
   Basic: 5, // Limite de categorias para o plano básico
   Premium: Infinity, // Sem limite para o plano Premium
-}; 
+};
 export const CategoriesPage = () => {
   const { userPlan } = useAuth(); // Recupera o plano do usuário
   const [categories, setCategories] = useState([]);
   const [newCategory, setNewCategory] = useState({ name: "", color: "" });
   const [editingCategory, setEditingCategory] = useState(null);
   const [loading, setLoading] = useState(true);
-   
+
   const remainingCategories = CATEGORY_LIMITS[userPlan] - categories.length;
 
   // Fetch categories from backend
@@ -37,19 +37,25 @@ export const CategoriesPage = () => {
   // Create or Update Category
   const handleSaveCategory = async () => {
     if (!newCategory.name.trim()) {
-      alert("O nome da categoria é obrigatório.");//mudar pro toastfy dps
+      alert("O nome da categoria é obrigatório."); // Mudar para toastfy ou similar no futuro
       return;
     }
-
+  
+    // Definir cor padrão como preta (#000000) caso não seja fornecida
+    const categoryData = {
+      ...newCategory,
+      color: newCategory.color || "#000000", // Cor padrão
+    };
+  
     try {
       if (editingCategory) {
-        // Update existing category
-        await api.put(`/categories/${editingCategory.id}`, newCategory);
+        // Atualizar categoria existente
+        await api.put(`/categories/${editingCategory.id}`, categoryData);
       } else {
-        // Create new category
-        console.log(newCategory);
+        // Criar nova categoria
+        console.log("Criando categoria:", categoryData);
         try {
-          await api.post("/categories", newCategory);
+          await api.post("/categories", categoryData);
         } catch (error) {
           if (error.response?.status === 400) {
             alert(error.response.data.message);
@@ -58,14 +64,14 @@ export const CategoriesPage = () => {
           }
         }
       }
-
-      // Refresh categories
+  
+      // Atualizar lista de categorias
       const endpoint =
         userPlan === "Basic" ? "/categories/basic" : "/categories/premium";
       const response = await api.get(endpoint);
       setCategories(response.data);
-
-      // Reset state
+  
+      // Resetar o formulário
       setNewCategory({ name: "", color: "" });
       setEditingCategory(null);
     } catch (error) {

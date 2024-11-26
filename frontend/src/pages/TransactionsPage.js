@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import api from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
+import { formatDate, formatCurrency } from "../utils/index"
+
 
 export const TransactionsPage = () => {
     const { userPlan } = useAuth(); // Recupera o plano do usuário
@@ -209,36 +211,42 @@ export const TransactionsPage = () => {
                     </select>
                 </div>
                 {/* Tabela de Transações */}
-                <div className="bg-white shadow-lg rounded-lg">
-                    <table className="w-full border-collapse">
+                <div className="flex justify-center items-center bg-white shadow-lg rounded-lg overflow-hidden">
+                    <table className="table-auto w-full border-collapse">
                         <thead>
                             <tr className="bg-teal-600 text-white">
-                                <th className="py-2 px-4">Data</th>
-                                <th className="py-2 px-4">Tipo</th>
-                                <th className="py-2 px-4">Categoria</th>
-                                <th className="py-2 px-4">Valor</th>
-                                <th className="py-2 px-4">Descrição</th>
-                                <th className="py-2 px-4">Ações</th>
+                                <th className="py-4 px-6 text-left text-sm font-bold uppercase tracking-wider">Data</th>
+                                <th className="py-4 px-6 text-left text-sm font-bold uppercase tracking-wider">Tipo</th>
+                                <th className="py-4 px-6 text-left text-sm font-bold uppercase tracking-wider">Categoria</th>
+                                <th className="py-4 px-6 text-left text-sm font-bold uppercase tracking-wider">Valor</th>
+                                <th className="py-4 px-6 text-left text-sm font-bold uppercase tracking-wider">Descrição</th>
+                                <th className="py-4 px-6 text-left text-sm font-bold uppercase tracking-wider">Ações</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {filteredTransactions.map((transaction) => (
-                                <tr key={transaction.id} className="border-b">
-                                    <td className="py-2 px-4">{transaction.date}</td>
-                                    <td className="py-2 px-4">{transaction.type}</td>
-                                    <td className="py-2 px-4">{transaction.category?.name || 'Sem Categoria'}</td>
-                                    <td className="py-2 px-4">R$ {transaction.amount}</td>
-                                    <td className="py-2 px-4">{transaction.description}</td>
-                                    <td className="py-2 px-4">
+                            {filteredTransactions.map((transaction, index) => (
+                                <tr
+                                    key={transaction.id}
+                                    className={`border-b ${index % 2 === 0 ? "bg-gray-100" : "bg-white"
+                                        } hover:bg-teal-100 transition-colors duration-200`}
+                                >
+                                    <td className="py-4 px-6 text-gray-700 text-sm">{formatDate(transaction.date)}</td>
+                                    <td className="py-4 px-6 text-gray-700 text-sm">{transaction.type}</td>
+                                    <td className="py-4 px-6 text-gray-700 text-sm">{transaction.category?.name || "Sem Categoria"}</td>
+                                    <td className="py-4 px-6 text-gray-700 text-sm">R$ {formatCurrency(transaction.amount)}</td>
+                                    <td className="py-4 px-6 text-gray-700 text-sm">
+                                        {transaction.description.replace(/\d+(\.\d+)?/g, (match) => formatCurrency(Number(match)))}
+                                    </td>
+                                    <td className="py-4 px-6 text-sm">
                                         <button
                                             onClick={() => handleEditTransaction(transaction)}
-                                            className="text-blue-600 hover:underline mr-4"
+                                            className="text-blue-600 hover:text-blue-800 font-semibold transition-all duration-200 mr-4"
                                         >
                                             Editar
                                         </button>
                                         <button
                                             onClick={() => handleDeleteTransaction(transaction.id)}
-                                            className="text-red-600 hover:underline"
+                                            className="text-red-600 hover:text-red-800 font-semibold transition-all duration-200"
                                         >
                                             Remover
                                         </button>

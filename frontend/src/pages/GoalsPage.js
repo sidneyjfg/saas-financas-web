@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import { useAuth } from "../contexts/AuthContext";
+import { formatDate, formatCurrency } from "../utils/index"
 
 export const GoalsPage = () => {
   const [goals, setGoals] = useState([]);
@@ -12,6 +13,7 @@ export const GoalsPage = () => {
     deadline: '',
     categoryId: '',
   });
+  const [editingGoalId, setEditingGoalId] = useState(null); // ID da meta que está sendo editada
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -39,45 +41,82 @@ export const GoalsPage = () => {
 
   const handleSaveGoal = async () => {
     try {
-      if (!newGoal.name || !newGoal.targetAmount) {
-        alert('Preencha todos os campos obrigatórios.');
+      if (!newGoal.name || !newGoal.targetAmount || isNaN(newGoal.targetAmount)) {
+        alert('Preencha todos os campos obrigatórios e insira um valor válido.');
         return;
       }
-
+  
       let categoryId = newGoal.categoryId;
-
-      // Se nenhuma categoria for escolhida, crie uma nova
+  
+      // Criar uma nova categoria automaticamente, se necessário
       if (!categoryId) {
         const categoryResponse = await api.post('/categories', {
           name: `Meta: ${newGoal.name}`,
-          color: '#4CAF50', // Cor padrão
+          color: '#4CAF50', // Cor padrão para categorias de metas
         });
         categoryId = categoryResponse.data.id;
       }
-
-      // Salve a meta vinculada à categoria
-      await api.post('/goals', {
+  
+      // Salvar ou atualizar a meta
+      const goalData = {
         ...newGoal,
         categoryId,
-      });
-
-      // Atualize a lista de metas
+      };
+  
+      if (editingGoalId) {
+        // Atualizar meta existente
+        await api.put(`/goals/${editingGoalId}`, goalData);
+      } else {
+        // Criar nova meta
+        await api.post('/goals', goalData);
+      }
+  
+      // Atualizar a lista de metas
       const response = await api.get('/goals');
       setGoals(response.data);
-
-      // Limpe o formulário
+  
+      // Resetar o formulário
       setNewGoal({ name: '', targetAmount: '', deadline: '', categoryId: '' });
+      setEditingGoalId(null); // Encerrar modo de edição
     } catch (error) {
       console.error('Erro ao salvar meta:', error);
+      
+      // Verificar se há mensagem do backend
+      const errorMessage = error.response?.data?.message || 'Erro inesperado. Tente novamente.';
+      alert(errorMessage); // Exibir mensagem do backend ao usuário
+    }
+  };
+  
+
+  const handleDeleteGoal = async (id) => {
+    if (window.confirm('Tem certeza que deseja excluir esta meta?')) {
+      try {
+        await api.delete(`/goals/${id}`);
+
+        // Atualizar a lista de metas após a exclusão
+        const response = await api.get('/goals');
+        setGoals(response.data);
+      } catch (error) {
+        console.error('Erro ao excluir meta:', error);
+        alert('Erro ao excluir meta. Tente novamente.');
+      }
     }
   };
 
-
-  const formatCurrency = (value) =>
-    new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(value);
+  const handleEditGoal = (goal) => {
+    console.log(goal.deadline);
+    setNewGoal({
+      name: goal.name,
+      targetAmount: goal.targetAmount,
+      deadline: formatDate(goal.deadline),
+      categoryId: goal.categoryId,
+    });
+    setEditingGoalId(goal.id); // Define a meta que está sendo editada
+  };
+  const handleCancelEdit = () => {
+    setNewGoal({ name: '', targetAmount: '', deadline: '', categoryId: '' });
+    setEditingGoalId(null); // Sai do modo de edição
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -88,7 +127,7 @@ export const GoalsPage = () => {
 
         {/* Formulário de Nova Meta */}
         <div className="bg-white p-6 rounded-lg shadow-md mb-8">
-          <h2 className="text-xl font-bold mb-4">Nova Meta</h2>
+          <h2 className="text-xl font-bold mb-4">{editingGoalId ? 'Editar Meta' : 'Nova Meta'}</h2>
           <input
             type="text"
             className="border rounded-lg p-2 w-full mb-4"
@@ -122,14 +161,23 @@ export const GoalsPage = () => {
             ))}
           </select>
 
-          <button
-            className="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-all"
-            onClick={handleSaveGoal}
-          >
-            Salvar Meta
-          </button>
+          <div className="flex justify-between">
+            <button
+              className="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-all"
+              onClick={handleSaveGoal}
+            >
+              {editingGoalId ? 'Atualizar Meta' : 'Salvar Meta'}
+            </button>
+            {editingGoalId && (
+              <button
+                className="bg-gray-400 text-white px-4 py-2 rounded-lg hover:bg-gray-500 transition-all"
+                onClick={handleCancelEdit}
+              >
+                Cancelar
+              </button>
+            )}
+          </div>
         </div>
-
         {/* Lista de Metas */}
         {loading ? (
           <p className="text-center text-gray-500">Carregando...</p>
@@ -163,6 +211,20 @@ export const GoalsPage = () => {
                     <p className="text-sm text-gray-600 mt-2">
                       Progresso: {formatCurrency(goal.progress || 0)} / {formatCurrency(goal.targetAmount)}
                     </p>
+                  </div>
+                  <div className="flex justify-between mt-4">
+                    <button
+                      onClick={() => handleEditGoal(goal)}
+                      className="text-blue-600 hover:underline"
+                    >
+                      Editar
+                    </button>
+                    <button
+                      onClick={() => handleDeleteGoal(goal.id)}
+                      className="text-red-600 hover:underline"
+                    >
+                      Excluir
+                    </button>
                   </div>
                 </div>
               );
