@@ -7,37 +7,49 @@ const monthNames = [
   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
 ];
 
-const BasicReports = ({ data }) => {
+const BasicReports = ({ data, goalsData }) => {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedMonth, setSelectedMonth] = useState("");
-  const [summary, setSummary] = useState({ totalIncome: 0, totalExpense: 0 });
-
+  const [summary, setSummary] = useState({ totalIncome: 0, totalExpense: 0, totalGoal: 0 });
+  console.log(goalsData);
   // Filtrar dados com base nos filtros aplicados
-  const filteredData = data.filter((item) => {
-    const matchesCategory = selectedCategory ? item.categoryName === selectedCategory : true;
-    const matchesMonth = selectedMonth ? `${item.year}-${item.month}` === selectedMonth : true;
-    return matchesCategory && matchesMonth;
-  });
+  const filteredData = React.useMemo(() => {
+    return data.filter((item) => {
+      const matchesCategory = selectedCategory ? item.categoryName === selectedCategory : true;
+      const matchesMonth = selectedMonth ? `${item.year}-${item.month}` === selectedMonth : true;
+      return matchesCategory && matchesMonth;
+    });
+  }, [data, selectedCategory, selectedMonth]);
 
   useEffect(() => {
-    // Verifica se os dados foram alterados antes de atualizar o estado
+    console.log("Filtered Data (Before Income Calculation):", filteredData);
+
     const totalIncome = filteredData
-      .filter((item) => item.type === "income")
+      .filter((item) => {
+        const isIncome = item.type === "income";
+        const isNotGoal = !goalsData.some(
+          (goal) => String(goal.category.categoryId) === String(item.categoryId)
+        );
+        return isIncome && isNotGoal;
+      })
       .reduce((acc, item) => acc + parseFloat(item.total), 0);
-  
+
+    console.log("Filtered Data (Income):", totalIncome);
+
     const totalExpense = filteredData
       .filter((item) => item.type === "expense")
       .reduce((acc, item) => acc + parseFloat(item.total), 0);
-  
-    // Atualiza o resumo somente se os valores mudarem
-    setSummary((prevSummary) => {
-      if (prevSummary.totalIncome !== totalIncome || prevSummary.totalExpense !== totalExpense) {
-        return { totalIncome, totalExpense };
-      }
-      return prevSummary; // Evita atualizações desnecessárias
+
+    const totalGoal = goalsData.reduce((acc, goal) => acc + parseFloat(goal.targetAmount), 0);
+
+    setSummary({
+      totalIncome,
+      totalExpense,
+      totalGoal,
     });
-  }, [filteredData]);
-  
+  }, [filteredData, goalsData]);
+
+
 
   const categories = [...new Set(data.map((item) => item.categoryName))];
   const months = [...new Set(
@@ -90,15 +102,24 @@ const BasicReports = ({ data }) => {
       <h1 className="text-3xl font-bold text-center text-gray-800 mb-8">Basic Financial Reports</h1>
 
       {/* Resumo Rápido */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
+      <div className="grid grid-cols-3 gap-4 mb-6">
         <div className="bg-green-100 text-green-800 p-4 rounded-lg shadow">
           <h2 className="text-lg font-bold">Total Income</h2>
           <p className="text-xl font-semibold">${summary.totalIncome.toFixed(2)}</p>
         </div>
+
         <div className="bg-red-100 text-red-800 p-4 rounded-lg shadow">
           <h2 className="text-lg font-bold">Total Expenses</h2>
           <p className="text-xl font-semibold">${summary.totalExpense.toFixed(2)}</p>
         </div>
+        <div className="bg-blue-100 text-blue-800 p-4 rounded-lg shadow">
+          <h2 className="text-lg font-bold">Total Goal</h2>
+          <p className="text-xl font-semibold">
+            {`$${summary.totalGoal.toFixed(2)} (${goalsData.reduce((acc, goal) => acc + parseFloat(goal.progress || 0), 0).toFixed(2)} / $${summary.totalGoal.toFixed(2)})`}
+          </p>
+        </div>
+
+
       </div>
 
       {/* Filtros */}
@@ -150,17 +171,16 @@ const BasicReports = ({ data }) => {
       </div>
 
       {/* Tabela de Categorias */}
-      <div className="mt-8">
-        <h2 className="text-xl font-bold text-gray-700 mb-4">Category Summary</h2>
-        <table className="table-auto w-full text-left border-collapse border border-gray-300">
+      <div className="flex justify-center items-center bg-white shadow-lg rounded-lg overflow-hidden mt-8">
+        <table className="table-auto w-full border-collapse">
           <thead>
-            <tr>
-              <th className="px-4 py-2 border border-gray-300">Category</th>
-              <th className="px-4 py-2 border border-gray-300">Total Expense (%)</th>
+            <tr className="bg-teal-600 text-white">
+              <th className="py-4 px-6 text-left text-sm font-bold uppercase tracking-wider">Categoria</th>
+              <th className="py-4 px-6 text-left text-sm font-bold uppercase tracking-wider">Total de Despesas (%)</th>
             </tr>
           </thead>
           <tbody>
-            {categories.map((category) => {
+            {categories.map((category, index) => {
               const totalCategoryExpense = filteredData
                 .filter((item) => item.categoryName === category && item.type === "expense")
                 .reduce((acc, item) => acc + parseFloat(item.total), 0);
@@ -168,10 +188,14 @@ const BasicReports = ({ data }) => {
               const percentage = ((totalCategoryExpense / summary.totalExpense) * 100).toFixed(2);
 
               return (
-                <tr key={category}>
-                  <td className="px-4 py-2 border border-gray-300">{category}</td>
-                  <td className="px-4 py-2 border border-gray-300">
-                    {isNaN(percentage) ? "0.00%" : `${percentage}%`}
+                <tr
+                  key={category}
+                  className={`border-b ${index % 2 === 0 ? "bg-gray-100" : "bg-white"
+                    } hover:bg-teal-100 transition-colors duration-200`}
+                >
+                  <td className="py-4 px-6 text-gray-700 text-sm font-medium">{category}</td>
+                  <td className="py-4 px-6 text-gray-700 text-sm">
+                    {isNaN(percentage) || summary.totalExpense === 0 ? "0.00%" : `${percentage}%`}
                   </td>
                 </tr>
               );

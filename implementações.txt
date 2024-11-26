@@ -95,3 +95,10 @@ Funcionalidade avançada para diferenciação de planos.
 Painel de Controle com Insights:
 Oferece um resumo visual do estado financeiro do usuário.
 Se precisar de ajuda para começar a próxima funcionalidade ou criar mais detalhes técnicos, é só pedir!
+
+
+
+
+
+Incluir: [Tabela:awnfr] PROCEDURE o2_sqldados.insertIntoAwnfrapi does not exist 
+Erro de INSERT na tabela awnfr (Erro 1305)                                      
