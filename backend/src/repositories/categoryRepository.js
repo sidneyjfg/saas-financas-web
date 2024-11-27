@@ -3,6 +3,7 @@ const { Category } = require('../models');
 class CategoryRepository {
   // Buscar categorias Premium de um usuário
   async findAllPremiumByUser(userId) {
+    console.log("findAllPremiumByUser, ", userId);
     return await Category.findAll({
       where: { userId },
       attributes: ['id', 'name', 'color', 'keywords'], // Inclua 'keywords'
@@ -24,10 +25,11 @@ class CategoryRepository {
     return await Category.create({
       name: categoryData.name,
       color: categoryData.color || "#000000", // Cor padrão
-      keywords: categoryData.keywords ? JSON.stringify(categoryData.keywords) : null, // Armazenar como JSON
+      keywords: categoryData.keywords, // Insere diretamente como array
       userId: categoryData.userId,
     });
   }
+
 
   // Atualizar uma categoria existente
   async update(id, categoryData) {

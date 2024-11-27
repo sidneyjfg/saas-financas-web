@@ -101,6 +101,23 @@ class TransactionController {
     }
   }
 
+  async updateCategories(req, res) {
+    console.log("Estou aqui");
+    const userId = req.user?.id; // Certifique-se de que req.user existe
+    if (!userId) {
+      return res.status(400).json({ error: "userId não encontrado na requisição" });
+    }
+    try {
+      const updatedCount = await transactionService.updateCategories(userId);
+      return res
+        .status(200)
+        .json({ message: `${updatedCount} transações foram atualizadas.` });
+    } catch (error) {
+      console.error("Erro ao atualizar categorias:", error.message);
+      return res.status(500).json({ error: "Erro ao atualizar categorias." });
+    }
+  }
+
   // Excluir transação
   async delete(req, res) {
     const userId = req.user.id;

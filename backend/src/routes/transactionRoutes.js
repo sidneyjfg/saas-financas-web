@@ -15,8 +15,8 @@ const upload = multer({ dest: path.join(__dirname, "../uploads") });
 router.post('/', authenticate, transactionController.create);
 
 // Atualizar transação
+router.put('/update-categories', authenticate, transactionController.updateCategories);
 router.put('/:id', authenticate, transactionController.update);
-
 // Excluir transação
 router.delete('/:id', authenticate, transactionController.delete);
 

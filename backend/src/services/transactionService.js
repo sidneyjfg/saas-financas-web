@@ -3,6 +3,7 @@ const categoryRepository = require('../repositories/categoryRepository');
 const goalRepository = require('../repositories/goalRepository');
 const fs = require('fs');
 const csv = require('csv-parser'); // Verifique se a biblioteca `csv-parser` está instalada.
+const { use } = require('../routes/transactionRoutes');
 
 
 class TransactionService {
@@ -28,8 +29,10 @@ class TransactionService {
         return transaction;
     }
 
-    // Atualiza uma transação existente
+
+    // Atualiza uma transação unica
     async updateTransaction(id, transactionData) {
+        console.log(id);
         const transaction = await transactionRepository.findById(id);
 
         if (!transaction) {
@@ -148,6 +151,40 @@ class TransactionService {
 
         return transactions.length;
     }
+
+    async updateCategories(userId) {
+        console.log("Toma o userID: ", userId);
+    
+        const transactions = await transactionRepository.findAllByUser(userId);
+        const categories = await categoryRepository.findAllPremiumByUser(userId);
+    
+        console.log("Transações encontradas: ", transactions);
+        console.log("Categorias encontradas: ", categories);
+    
+        let updatedCount = 0;
+    
+        for (const transaction of transactions) {
+            const matchedCategory = categories.find((category) => {
+              // Certifique-se de que `keywords` é um array
+              return category.keywords.some((keyword) =>
+                transaction.description.toLowerCase().includes(keyword.toLowerCase())
+              );
+            });
+          
+            if (matchedCategory && transaction.categoryId !== matchedCategory.id) {
+              await transactionRepository.update(
+                transaction.id,
+                { categoryId: matchedCategory.id },
+                userId // Passe o userId aqui
+              );
+              updatedCount++;
+            }
+        }
+    
+        console.log("Categorias atualizadas: ", updatedCount);
+        return updatedCount;
+    }
+    
 }
 
 module.exports = new TransactionService();

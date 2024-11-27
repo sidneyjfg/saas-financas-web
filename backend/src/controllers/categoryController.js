@@ -5,14 +5,14 @@ class CategoryController {
   async listPremium(req, res) {
     const userId = req.user.id;
     const userPlan = req.user.plan; // Assume que o middleware de autenticação define o plano do usuário
-  
+
     try {
       if (userPlan !== "Premium") {
         return res
           .status(403)
           .json({ message: "Acesso restrito a usuários Premium." });
       }
-  
+
       const categories = await categoryService.getPremiumCategories(userId);
       console.log(categories);
       return res.status(200).json(categories);
@@ -21,7 +21,7 @@ class CategoryController {
       return res.status(500).json({ error: "Erro ao buscar categorias." });
     }
   }
-  
+
 
   // Listagem de categorias Básicas
   async listBasic(req, res) {
@@ -48,7 +48,7 @@ class CategoryController {
 
     try {
       // Para planos básicos, ignorar palavras-chave
-      const keywordsArray = userPlan === "Basic" ? [] : (keywords ? keywords.split(",").map((kw) => kw.trim()) : []);
+      const keywordsArray = Array.isArray(keywords) ? keywords : [];
 
       const category = await categoryService.createCategory({
         name,
@@ -82,8 +82,8 @@ class CategoryController {
       const category = await categoryService.updateCategory(id, {
         name,
         color,
-        userId,
         keywords: keywordsArray,
+        userId,
       });
 
       return res.status(200).json(category);

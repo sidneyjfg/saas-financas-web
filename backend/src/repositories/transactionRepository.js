@@ -3,13 +3,14 @@ const { Transaction, Category, Sequelize } = require('../models');
 class TransactionRepository {
   // Busca todas as transações de um usuário
   async findAllByUser(userId) {
+    console.log("findAllByUser: ", userId);
     return await Transaction.findAll({
       where: { userId },
       include: [
         {
           model: Category,
-          as: 'category', // Essa referência depende de o `Category` estar corretamente inicializado
-          attributes: ['id', 'name', 'color'],
+          as: 'category',
+          attributes: ['id', 'name', 'color', 'keywords'], // Inclua 'keywords'
         },
       ],
       order: [['date', 'DESC']],
@@ -30,7 +31,7 @@ class TransactionRepository {
         {
           model: Category,
           as: 'category',
-          attributes: ['id', 'name', 'color'],
+          attributes: ['id', 'name', 'color', 'keywords'],
         },
       ],
     });
@@ -106,9 +107,12 @@ class TransactionRepository {
   }
 
   // Atualizar uma transação existente
-  async update(id, transactionData) {
-    return await Transaction.update(transactionData, {
-      where: { id, userId: transactionData.userId },
+  async update(id, data, userId) {
+    if (!userId) {
+      throw new Error("userId é necessário para atualizar uma transação");
+    }
+    return await Transaction.update(data, {
+      where: { id, userId },
     });
   }
 
