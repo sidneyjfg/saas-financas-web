@@ -15,6 +15,15 @@ class TransactionRepository {
       order: [['date', 'DESC']],
     });
   }
+
+  async findCategoryByName(name) {
+    return await Category.findOne({ where: { name } });
+  }
+
+  async createCategory(name) {
+    return await Category.create({ name });
+  }
+
   async findById(id) {
     return await Transaction.findByPk(id, {
       include: [
@@ -82,12 +91,12 @@ class TransactionRepository {
   }
   async getTotalByCategoryAndType(categoryId, type) {
     const result = await Transaction.findAll({
-        where: { categoryId, type },
-        attributes: [[Sequelize.fn('SUM', Sequelize.col('amount')), 'total']],
+      where: { categoryId, type },
+      attributes: [[Sequelize.fn('SUM', Sequelize.col('amount')), 'total']],
     });
 
     return result[0]?.dataValues?.total || 0;
-}
+  }
 
 
 
@@ -109,6 +118,8 @@ class TransactionRepository {
       where: { id, userId },
     });
   }
+
+
 }
 
 module.exports = new TransactionRepository();

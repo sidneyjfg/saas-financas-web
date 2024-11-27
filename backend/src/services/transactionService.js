@@ -1,5 +1,8 @@
 const transactionRepository = require('../repositories/transactionRepository');
 const goalRepository = require('../repositories/goalRepository');
+const fs = require('fs');
+const csv = require('csv-parser'); // Verifique se a biblioteca `csv-parser` está instalada.
+
 
 class TransactionService {
     // Obtém o resumo mensal de transações
@@ -93,6 +96,46 @@ class TransactionService {
 
         return csv;
     }
+
+    async importTransactionsFromCSV(filePath, userId) {
+        const transactions = [];
+    
+        // Ler e processar o CSV da Nubank
+        await new Promise((resolve, reject) => {
+          fs.createReadStream(filePath)
+            .pipe(csv())
+            .on("data", (row) => {
+              if (row.date && row.title && row.amount) {
+                transactions.push({
+                  date: row.date,
+                  type: parseFloat(row.amount) < 0 ? "expense" : "income", // Define tipo baseado no valor
+                  category: "Nubank", // Categoria padrão para transações importadas
+                  amount: Math.abs(parseFloat(row.amount)), // Remove o sinal negativo
+                  description: row.title,
+                  userId, // Associa ao usuário autenticado
+                });
+              }
+            })
+            .on("end", resolve)
+            .on("error", reject);
+        });
+    
+        // Processar transações
+        for (const transaction of transactions) {
+          let category = await transactionRepository.findCategoryByName(transaction.category);
+    
+          if (!category) {
+            category = await transactionRepository.createCategory(transaction.category);
+          }
+    
+          await transactionRepository.create({
+            ...transaction,
+            categoryId: category.id,
+          });
+        }
+    
+        return transactions.length; // Retorna o total de transações importadas
+      }
 }
 
 module.exports = new TransactionService();

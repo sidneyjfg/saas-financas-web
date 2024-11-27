@@ -1,8 +1,13 @@
 const express = require('express');
+const multer = require('multer');
+
+const path = require("path");
 const transactionController = require('../controllers/transactionController');
 const authenticate = require("../middlewares/authenticate");
 const planMiddleware = require("../middlewares/planMiddleware");
 const router = express.Router();
+// Configuração de upload
+const upload = multer({ dest: path.join(__dirname, "../uploads") });
 
 
 
@@ -53,5 +58,13 @@ router.get(
   transactionController.exportTransactions // Exporta transações para CSV
 );
 
+// Rotas
+router.post(
+  "/import",
+  upload.single("file"),
+  authenticate,
+  planMiddleware("Premium"), // Restringe para usuários Premium
+  transactionController.importCSV
+);
 
 module.exports = router;

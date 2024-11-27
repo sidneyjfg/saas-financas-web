@@ -1,4 +1,5 @@
 const transactionService = require('../services/transactionService');
+const fs = require("fs");
 
 class TransactionController {
   // Relatório mensal básico
@@ -114,7 +115,26 @@ class TransactionController {
     }
   }
 
+  async importCSV(req, res) {
+    const filePath = req.file.path;
 
+    try {
+      const totalTransactions = await transactionService.importTransactionsFromCSV(
+        filePath,
+        req.user.id // Passa o ID do usuário autenticado
+      );
+
+      // Remove o arquivo após processar
+      fs.unlinkSync(filePath);
+
+      return res.status(200).json({
+        message: `${totalTransactions} transações importadas com sucesso!`,
+      });
+    } catch (error) {
+      console.error("Erro ao importar CSV:", error);
+      return res.status(500).json({ error: "Erro ao importar CSV." });
+    }
+  }
 
 }
 

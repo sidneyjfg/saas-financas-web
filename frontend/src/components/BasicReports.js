@@ -115,7 +115,7 @@ const BasicReports = ({ data, goalsData }) => {
         <div className="bg-blue-100 text-blue-800 p-4 rounded-lg shadow">
           <h2 className="text-lg font-bold">Total Goal</h2>
           <p className="text-xl font-semibold">
-            {`$${summary.totalGoal.toFixed(2)} (${goalsData.reduce((acc, goal) => acc + parseFloat(goal.progress || 0), 0).toFixed(2)} / $${summary.totalGoal.toFixed(2)})`}
+            {`$${summary.totalGoal.toFixed(2)}`}
           </p>
         </div>
 

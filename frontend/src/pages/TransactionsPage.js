@@ -19,6 +19,36 @@ export const TransactionsPage = () => {
     const [loading, setLoading] = useState(true);
     const [filters, setFilters] = useState({ type: "Todos", category: "" });
 
+    const handleFileUpload = async (event) => {
+        const file = event.target?.files?.[0]; // Certifica-se de que o arquivo existe
+        if (!file) {
+            alert("Nenhum arquivo selecionado.");
+            return;
+        }
+
+        try {
+            const formData = new FormData();
+            formData.append("file", file);
+
+            const response = await api.post("/transactions/import", formData, {
+                headers: { "Content-Type": "multipart/form-data" },
+            });
+
+            alert("Arquivo importado com sucesso!");
+            console.log("Resposta do servidor:", response.data);
+
+            // Atualizar transações após importação
+            const transactionsResponse = await api.get("/transactions");
+            setTransactions(transactionsResponse.data);
+        } catch (error) {
+            const errorMessage =
+                error.response?.data?.error || "Erro ao importar o arquivo.";
+            alert(errorMessage);
+            console.error("Erro ao importar arquivo:", error);
+        }
+    };
+
+
     // Buscar Transações, Categorias e Metas
     useEffect(() => {
         const fetchData = async () => {
@@ -130,6 +160,32 @@ export const TransactionsPage = () => {
                     Gerenciamento de Transações
                 </h1>
 
+                {/* Botão de Upload */}
+                <div className="mt-4">
+                    {userPlan !== "Premium" ? (
+                        <p className="text-red-500">
+                            A importação de arquivos está disponível apenas para usuários Premium.
+                            <a
+                                href="/upgrade"
+                                className="text-teal-600 underline ml-1"
+                            >
+                                Atualize agora.
+                            </a>
+                        </p>
+                    ) : (
+                        <label className="cursor-pointer">
+                            <input
+                                type="file"
+                                accept=".csv"
+                                onChange={handleFileUpload}
+                                className="hidden"
+                            />
+                            <span className="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-all cursor-pointer">
+                                Importar CSV
+                            </span>
+                        </label>
+                    )}
+                </div>
                 {/* Formulário de Transações */}
                 <div className="bg-white p-6 shadow-lg rounded-lg mb-10">
                     <h2 className="text-xl font-bold text-gray-700 mb-4">
