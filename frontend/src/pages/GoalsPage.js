@@ -41,51 +41,44 @@ export const GoalsPage = () => {
 
   const handleSaveGoal = async () => {
     try {
-      if (!newGoal.name || !newGoal.targetAmount || isNaN(newGoal.targetAmount)) {
-        alert('Preencha todos os campos obrigatórios e insira um valor válido.');
-        return;
-      }
-  
-      let categoryId = newGoal.categoryId;
-  
-      // Criar uma nova categoria automaticamente, se necessário
-      if (!categoryId) {
-        const categoryResponse = await api.post('/categories', {
-          name: `Meta: ${newGoal.name}`,
-          color: '#4CAF50', // Cor padrão para categorias de metas
-        });
-        categoryId = categoryResponse.data.id;
-      }
-  
-      // Salvar ou atualizar a meta
-      const goalData = {
-        ...newGoal,
-        categoryId,
-      };
-  
-      if (editingGoalId) {
-        // Atualizar meta existente
-        await api.put(`/goals/${editingGoalId}`, goalData);
-      } else {
-        // Criar nova meta
-        await api.post('/goals', goalData);
-      }
-  
-      // Atualizar a lista de metas
-      const response = await api.get('/goals');
-      setGoals(response.data);
-  
-      // Resetar o formulário
-      setNewGoal({ name: '', targetAmount: '', deadline: '', categoryId: '' });
-      setEditingGoalId(null); // Encerrar modo de edição
+        if (!newGoal.name || !newGoal.targetAmount || isNaN(newGoal.targetAmount)) {
+            alert('Preencha todos os campos obrigatórios e insira um valor válido.');
+            return;
+        }
+
+        let categoryId = newGoal.categoryId;
+
+        // Criar uma nova categoria automaticamente, se necessário
+        if (!categoryId) {
+            const categoryResponse = await api.post('/categories', {
+                name: `Meta: ${newGoal.name}`,
+                color: '#4CAF50',
+            });
+            categoryId = categoryResponse.data.id;
+        }
+
+        const goalData = { ...newGoal, categoryId };
+
+        // Salvar ou atualizar a meta
+        if (editingGoalId) {
+            await api.put(`/goals/${editingGoalId}`, goalData);
+        } else {
+            await api.post('/goals', goalData);
+        }
+
+        const response = await api.get('/goals');
+        setGoals(response.data);
+
+        setNewGoal({ name: '', targetAmount: '', deadline: '', categoryId: '' });
+        setEditingGoalId(null);
     } catch (error) {
-      console.error('Erro ao salvar meta:', error);
-      
-      // Verificar se há mensagem do backend
-      const errorMessage = error.response?.data?.message || 'Erro inesperado. Tente novamente.';
-      alert(errorMessage); // Exibir mensagem do backend ao usuário
+        console.error('Erro ao salvar meta:', error);
+
+        // Exibe erro do backend ao usuário
+        alert(error.response?.data?.error || 'Erro ao salvar meta. Tente novamente.');
     }
-  };
+};
+
   
 
   const handleDeleteGoal = async (id) => {

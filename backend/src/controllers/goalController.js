@@ -14,20 +14,38 @@ class GoalController {
 
   async create(req, res) {
     const userId = req.user.id;
+    const userPlan = req.user.plan; // Verifica o plano do usuário
     const { name, targetAmount, deadline, categoryId } = req.body;
 
     if (!name || !targetAmount) {
-      return res.status(400).json({ error: 'Nome e valor alvo são obrigatórios.' });
+        return res.status(400).json({ error: 'Nome e valor alvo são obrigatórios.' });
     }
 
     try {
-      const goal = await goalService.createGoal({ userId, name, targetAmount, deadline, categoryId });
-      return res.status(201).json(goal);
+        // Validação do limite de metas para o plano Basic
+        if (userPlan === 'Basic') {
+            const userGoals = await goalService.listGoals(userId);
+            if (userGoals.length >= 1) {
+                return res.status(403).json({ error: 'Usuários do plano Basic podem criar apenas uma meta. Atualize seu plano para criar mais metas.' });
+            }
+        }
+
+        const goal = await goalService.createGoal({
+          userId,
+          name,
+          targetAmount,
+          deadline,
+          categoryId,
+          plan: req.user.plan, // Inclui o plano no serviço
+      });
+      
+        return res.status(201).json(goal);
     } catch (error) {
-      console.error('Erro ao criar meta:', error.message);
-      return res.status(500).json({ error: 'Erro ao criar meta.' });
+        console.error('Erro ao criar meta:', error.message);
+        return res.status(500).json({ error: 'Erro ao criar meta.' });
     }
-  }
+}
+
 
   async update(req, res) {
     const userId = req.user.id;
