@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { FiRefreshCcw } from "react-icons/fi"; // Biblioteca react-icons
 import api from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
+import { useReport } from "../contexts/ReportContext";
 import { formatDate, formatCurrency } from "../utils/index"
 
 
@@ -19,6 +20,7 @@ export const TransactionsPage = () => {
     const [editingTransaction, setEditingTransaction] = useState(null);
     const [loading, setLoading] = useState(true);
     const [filters, setFilters] = useState({ type: "Todos", category: "" });
+    const { triggerReload } = useReport();
 
     const handleFileUpload = async (event) => {
         const file = event.target?.files?.[0]; // Certifica-se de que o arquivo existe
@@ -79,29 +81,36 @@ export const TransactionsPage = () => {
     // Salvar ou Atualizar Transação
     const handleSaveTransaction = async () => {
         try {
+            // Verificar se todos os campos obrigatórios estão preenchidos
             if (!newTransaction.date || !newTransaction.amount || !newTransaction.category) {
                 alert("Preencha todos os campos obrigatórios.");
                 return;
             }
-
+    
+            // Preparar os dados para envio
+            const transactionPayload = {
+                date: newTransaction.date,
+                type: newTransaction.type || "expense",
+                amount: parseFloat(newTransaction.amount), // Garantir que é número
+                description: newTransaction.description || "",
+                categoryId: newTransaction.category?.id || newTransaction.category
+            };
+    
             if (editingTransaction) {
                 // Atualizar transação existente
-                console.log("Atualizando transação: ", newTransaction);
-                await api.put(`/transactions/${editingTransaction.id}`, newTransaction);
+                console.log("Atualizando transação: ", transactionPayload);
+                await api.put(`/transactions/${editingTransaction.id}`, transactionPayload);
             } else {
                 // Criar nova transação
-                console.log("Criar transação: ", newTransaction);
-                await api.post("/transactions", {
-                    ...newTransaction,
-                    categoryId: newTransaction.category, // Use o id da categoria
-                });
+                console.log("Criando nova transação: ", transactionPayload);
+                await api.post("/transactions", transactionPayload);
+                console.log("Criada");
             }
-            console.log("Saiu dos if");
-
+    
             // Recarregar dados após salvar
             const transactionsResponse = await api.get("/transactions");
             setTransactions(transactionsResponse.data);
-
+    
             // Resetar o formulário
             setNewTransaction({
                 date: "",
@@ -113,19 +122,23 @@ export const TransactionsPage = () => {
             setEditingTransaction(null);
         } catch (error) {
             console.error("Erro ao salvar transação:", error);
-            console.error("Erro detalhes:", error.response?.data || error.message);
+            alert("Erro ao salvar transação. Verifique os dados e tente novamente.");
         }
     };
-  
+    
+
+
     const handleUpdateCategories = async () => {
         try {
             const response = await api.put("/transactions/update-categories");
             alert("Categorias atualizadas com sucesso!");
             console.log("Resposta do servidor:", response.data);
 
+            // Dispara o reload para o contexto
             // Atualizar a lista de transações após a atualização
             const transactionsResponse = await api.get("/transactions");
             setTransactions(transactionsResponse.data);
+            triggerReload(); // Aqui dispara a atualização global
         } catch (error) {
             const errorMessage =
                 error.response?.data?.error || "Erro ao atualizar as categorias.";
@@ -133,6 +146,7 @@ export const TransactionsPage = () => {
             console.error("Erro ao atualizar categorias:", error);
         }
     };
+
 
     // Editar Transação
     const handleEditTransaction = (transaction) => {
@@ -205,7 +219,7 @@ export const TransactionsPage = () => {
                     )}
                 </div>
 
-                
+
                 {/* Formulário de Transações */}
                 <div className="bg-white p-6 shadow-lg rounded-lg mb-10">
                     <h2 className="text-xl font-bold text-gray-700 mb-4">
@@ -288,73 +302,72 @@ export const TransactionsPage = () => {
                 </div>
                 {/* Tabela de Transações */}
                 {/* Tabela de Transações */}
-        <div className="flex justify-center items-center bg-white shadow-lg rounded-lg overflow-hidden">
-          <table className="table-auto w-full border-collapse">
-            <thead>
-              <tr className="bg-teal-600 text-white">
-                <th className="py-4 px-6 text-left text-sm font-bold uppercase tracking-wider">Data</th>
-                <th className="py-4 px-6 text-left text-sm font-bold uppercase tracking-wider">Tipo</th>
-                <th className="py-4 px-6 text-left text-sm font-bold uppercase tracking-wider">
-                  Categoria
-                  <button
-                    onClick={handleUpdateCategories}
-                    className="ml-2 text-white hover:text-gray-300 transition-all"
-                    title="Atualizar Categorias"
-                  >
-                    <FiRefreshCcw />
-                  </button>
-                </th>
-                <th className="py-4 px-6 text-left text-sm font-bold uppercase tracking-wider">Valor</th>
-                <th className="py-4 px-6 text-left text-sm font-bold uppercase tracking-wider">Descrição</th>
-                <th className="py-4 px-6 text-left text-sm font-bold uppercase tracking-wider">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredTransactions.map((transaction, index) => (
-                <tr
-                  key={transaction.id}
-                  className={`border-b ${
-                    index % 2 === 0 ? "bg-gray-100" : "bg-white"
-                  } hover:bg-teal-100 transition-colors duration-200`}
-                >
-                  <td className="py-4 px-6 text-gray-700 text-sm">
-                    {formatDate(transaction.date)}
-                  </td>
-                  <td className="py-4 px-6 text-gray-700 text-sm">
-                    {transaction.type}
-                  </td>
-                  <td className="py-4 px-6 text-gray-700 text-sm">
-                    {transaction.category?.name || "Sem Categoria"}
-                  </td>
-                  <td className="py-4 px-6 text-gray-700 text-sm">
-                    R$ {formatCurrency(transaction.amount)}
-                  </td>
-                  <td className="py-4 px-6 text-gray-700 text-sm">
-                    {transaction.description.replace(
-                      /\d+(\.\d+)?/g,
-                      (match) => formatCurrency(Number(match))
-                    )}
-                  </td>
-                  <td className="py-4 px-6 text-sm">
-                    <button
-                      onClick={() => handleEditTransaction(transaction)}
-                      className="text-blue-600 hover:text-blue-800 font-semibold transition-all duration-200 mr-4"
-                    >
-                      Editar
-                    </button>
-                    <button
-                      onClick={() => handleDeleteTransaction(transaction.id)}
-                      className="text-red-600 hover:text-red-800 font-semibold transition-all duration-200"
-                    >
-                      Remover
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                <div className="flex justify-center items-center bg-white shadow-lg rounded-lg overflow-hidden">
+                    <table className="table-auto w-full border-collapse">
+                        <thead>
+                            <tr className="bg-teal-600 text-white">
+                                <th className="py-4 px-6 text-left text-sm font-bold uppercase tracking-wider">Data</th>
+                                <th className="py-4 px-6 text-left text-sm font-bold uppercase tracking-wider">Tipo</th>
+                                <th className="py-4 px-6 text-left text-sm font-bold uppercase tracking-wider">
+                                    Categoria
+                                    <button
+                                        onClick={handleUpdateCategories}
+                                        className="ml-2 text-white hover:text-gray-300 transition-all"
+                                        title="Atualizar Categorias"
+                                    >
+                                        <FiRefreshCcw />
+                                    </button>
+                                </th>
+                                <th className="py-4 px-6 text-left text-sm font-bold uppercase tracking-wider">Valor</th>
+                                <th className="py-4 px-6 text-left text-sm font-bold uppercase tracking-wider">Descrição</th>
+                                <th className="py-4 px-6 text-left text-sm font-bold uppercase tracking-wider">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {filteredTransactions.map((transaction, index) => (
+                                <tr
+                                    key={transaction.id}
+                                    className={`border-b ${index % 2 === 0 ? "bg-gray-100" : "bg-white"
+                                        } hover:bg-teal-100 transition-colors duration-200`}
+                                >
+                                    <td className="py-4 px-6 text-gray-700 text-sm">
+                                        {formatDate(transaction.date)}
+                                    </td>
+                                    <td className="py-4 px-6 text-gray-700 text-sm">
+                                        {transaction.type}
+                                    </td>
+                                    <td className="py-4 px-6 text-gray-700 text-sm">
+                                        {transaction.category?.name || "Sem Categoria"}
+                                    </td>
+                                    <td className="py-4 px-6 text-gray-700 text-sm">
+                                        R$ {formatCurrency(transaction.amount)}
+                                    </td>
+                                    <td className="py-4 px-6 text-gray-700 text-sm">
+                                        {transaction.description.replace(
+                                            /\d+(\.\d+)?/g,
+                                            (match) => formatCurrency(Number(match))
+                                        )}
+                                    </td>
+                                    <td className="py-4 px-6 text-sm">
+                                        <button
+                                            onClick={() => handleEditTransaction(transaction)}
+                                            className="text-blue-600 hover:text-blue-800 font-semibold transition-all duration-200 mr-4"
+                                        >
+                                            Editar
+                                        </button>
+                                        <button
+                                            onClick={() => handleDeleteTransaction(transaction.id)}
+                                            className="text-red-600 hover:text-red-800 font-semibold transition-all duration-200"
+                                        >
+                                            Remover
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
     );
 };

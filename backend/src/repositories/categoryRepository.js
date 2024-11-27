@@ -20,6 +20,15 @@ class CategoryRepository {
     });
   }
 
+  async findCategoryByIdAndUser(categoryId, userId) {
+    if (!categoryId || !userId) {
+        throw new Error("Categoria ou usuário inválido.");
+    }
+    return await Category.findOne({
+        where: { id: categoryId, userId },
+    });
+}
+
   // Criar nova categoria
   async create(categoryData) {
     return await Category.create({

@@ -55,27 +55,31 @@ class TransactionController {
       return res.status(500).json({ error: 'Error exporting transactions' });
     }
   }
+
   async create(req, res) {
-    const userId = req.user.id;
+    const userId = req.user?.id; // Certifique-se de que userId está definido
     const { date, type, amount, description, categoryId } = req.body;
 
-    if (!date || !type || !amount) {
-      return res.status(400).json({ error: 'Data, tipo e valor são obrigatórios.' });
+    if (!date || !type || !amount || !categoryId) {
+      return res.status(400).json({ error: "Data, tipo, valor e categoria são obrigatórios." });
     }
 
     try {
+      console.log("Usuário autenticado:", userId); // Log para verificar se userId está presente
+
       const transaction = await transactionService.createTransaction({
         date,
         type,
         amount,
         description,
         categoryId,
-        userId,
+        userId, // Passar userId explicitamente
       });
+
       return res.status(201).json(transaction);
     } catch (error) {
-      console.error('Erro ao criar transação:', error.message);
-      return res.status(500).json({ error: 'Erro ao criar transação.' });
+      console.error("Erro ao criar transação:", error.message);
+      return res.status(500).json({ error: "Erro ao criar transação." });
     }
   }
 
@@ -84,6 +88,11 @@ class TransactionController {
     const userId = req.user.id;
     const { id } = req.params;
     const { date, type, amount, description, categoryId } = req.body;
+
+    // Valide o `categoryId` no controller
+    if (!Number.isInteger(categoryId)) {
+      return res.status(400).json({ error: "ID da categoria inválido." });
+    }
 
     try {
       const transaction = await transactionService.updateTransaction(id, {
@@ -100,6 +109,7 @@ class TransactionController {
       return res.status(500).json({ error: 'Erro ao atualizar transação.' });
     }
   }
+
 
   async updateCategories(req, res) {
     console.log("Estou aqui");
@@ -120,7 +130,7 @@ class TransactionController {
 
   // Excluir transação
   async delete(req, res) {
-    const userId = req.user.id;
+    const userId = req.user?.id;
     const { id } = req.params;
 
     try {

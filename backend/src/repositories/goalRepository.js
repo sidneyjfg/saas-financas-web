@@ -15,11 +15,16 @@ class GoalRepository {
     });
   }
   
-  async findByCategory(categoryId) {
+  async findByCategory(userId, categoryId) {
+    if (!userId || !categoryId) {
+        throw new Error("Usuário ou categoria inválidos para buscar meta.");
+    }
+
     return await Goal.findOne({
-      where: { categoryId },
+        where: { userId, categoryId }, // Certifique-se de que o userId está no escopo
     });
-  }
+}
+
 
   async create(goalData) {
     return await Goal.create(goalData);

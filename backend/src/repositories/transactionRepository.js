@@ -90,19 +90,29 @@ class TransactionRepository {
       ],
     });
   }
-  async getTotalByCategoryAndType(categoryId, type) {
+  async getTotalByCategoryAndType(userId, categoryId, type) {
+    if (!userId || !categoryId || !type) {
+        throw new Error("Parâmetros inválidos para obter o total por categoria e tipo.");
+    }
+
     const result = await Transaction.findAll({
-      where: { categoryId, type },
-      attributes: [[Sequelize.fn('SUM', Sequelize.col('amount')), 'total']],
+        where: {
+            userId, // Certifique-se de filtrar pelo usuário
+            categoryId,
+            type,
+        },
+        attributes: [[Sequelize.fn('SUM', Sequelize.col('amount')), 'total']],
     });
 
     return result[0]?.dataValues?.total || 0;
-  }
+}
 
 
 
-  // Criar uma nova transação
   async create(transactionData) {
+    if (!transactionData.userId) {
+      throw new Error("Usuário não autenticado ao criar transação.");
+    }
     return await Transaction.create(transactionData);
   }
 

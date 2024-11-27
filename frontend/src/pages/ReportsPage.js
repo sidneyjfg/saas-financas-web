@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useAuth } from "../contexts/AuthContext";
+import { useReport } from "../contexts/ReportContext";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 import PremiumReports from "../components/PremiumReports";
 import BasicReports from "../components/BasicReports";
-import { formatCurrency } from "../utils/index"
+import { formatCurrency } from "../utils/index";
 
 import {
   Chart as ChartJS,
@@ -20,11 +21,29 @@ import {
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 export const ReportsPage = () => {
+  const { shouldReload, resetReload } = useReport(); // Contexto para atualização
   const { userPlan } = useAuth();
   const navigate = useNavigate();
   const [reportData, setReportData] = useState(null);
-  const [goals, setGoals] = useState([]); // Adiciona estado para as metas
+  const [goals, setGoals] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const reloadReportData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const reportEndpoint =
+        userPlan === "Basic" ? "/transactions/monthly" : "/transactions/premium/summary";
+      const reportResponse = await api.get(reportEndpoint);
+      setReportData(reportResponse.data);
+  
+      const goalsResponse = await api.get("/goals");
+      setGoals(goalsResponse.data);
+    } catch (error) {
+      console.error("Error reloading report data:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [userPlan]); // Memoriza a função com base no plano do usuário  
 
   useEffect(() => {
     if (!userPlan) {
@@ -33,30 +52,21 @@ export const ReportsPage = () => {
     }
   }, [userPlan, navigate]);
 
+  // Recarregar dados ao montar o componente
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
+    reloadReportData(); // Executa ao montar o componente
+  }, [reloadReportData]);
 
-        // Busca os dados do relatório
-        const reportEndpoint =
-          userPlan === "Basic" ? "/transactions/monthly" : "/transactions/premium/summary";
-        const reportResponse = await api.get(reportEndpoint);
-        setReportData(reportResponse.data);
-
-        // Busca as metas
-        const goalsResponse = await api.get("/goals");
-        setGoals(goalsResponse.data);
-
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [userPlan]);
+  // Recarregar dados quando o estado `shouldReload` mudar
+  useEffect(() => {
+    console.log("shouldReload mudou:", shouldReload);
+    if (shouldReload) {
+      reloadReportData();
+      resetReload();
+    }
+  }, [shouldReload, reloadReportData, resetReload]);
+  
+  
 
   const handleExportCSV = async () => {
     try {
@@ -89,7 +99,7 @@ export const ReportsPage = () => {
         {/* Coluna de Relatórios */}
         <div className="flex-1">
           {userPlan === "Premium" ? (
-            <PremiumReports data={reportData} />
+            <PremiumReports data={reportData} goalsData={goals}/>
           ) : (
             <BasicReports data={reportData} goalsData={goals} />
           )}
