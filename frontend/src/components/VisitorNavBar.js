@@ -64,7 +64,7 @@ const VisitorNavbar = () => {
           to="/signin"
           className={({ isActive }) =>
             isActive
-              ? "py-2 px-4 bg-gray-300 rounded-lg font-bold"
+              ? "py-2 px-4 bg-gray-300 rounded-lg font-bold mr-3"
               : "py-2 px-4 bg-gray-200 hover:bg-gray-300 rounded-lg mr-3"
           }
         >

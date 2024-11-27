@@ -5,8 +5,7 @@ class CategoryRepository {
   async findAllPremiumByUser(userId) {
     return await Category.findAll({
       where: { userId },
-      attributes: ['id', 'name', 'color'], // Retorna somente os campos necessários
-      order: [['name', 'ASC']],
+      attributes: ['id', 'name', 'color', 'keywords'], // Inclua 'keywords'
     });
   }
 
@@ -14,7 +13,7 @@ class CategoryRepository {
   async findAllBasicByUser(userId) {
     return await Category.findAll({
       where: { userId },
-      attributes: ['id', 'name', 'color'], // Retorna somente os campos necessários
+      attributes: ['id', 'name', 'color', 'keywords'],
       limit: 5, // Limita o número de categorias para usuários Basic
       order: [['name', 'ASC']],
     });
@@ -22,14 +21,32 @@ class CategoryRepository {
 
   // Criar nova categoria
   async create(categoryData) {
-    return await Category.create(categoryData);
+    return await Category.create({
+      name: categoryData.name,
+      color: categoryData.color || "#000000", // Cor padrão
+      keywords: categoryData.keywords ? JSON.stringify(categoryData.keywords) : null, // Armazenar como JSON
+      userId: categoryData.userId,
+    });
   }
 
   // Atualizar uma categoria existente
   async update(id, categoryData) {
-    return await Category.update(categoryData, {
-      where: { id, userId: categoryData.userId },
-    });
+    try {
+      // Atualizar a categoria no banco
+      return await Category.update(
+        {
+          name: categoryData.name,
+          color: categoryData.color,
+          keywords: JSON.stringify(categoryData.keywords), // Armazenar como JSON
+        },
+        {
+          where: { id, userId: categoryData.userId },
+        }
+      );
+    } catch (error) {
+      console.error("Error in update repository:", error.message);
+      throw error;
+    }
   }
 
   async countByUser(userId) {
@@ -37,7 +54,7 @@ class CategoryRepository {
       where: { userId },
     });
   }
-  
+
   // Excluir uma categoria
   async delete(id, userId) {
     return await Category.destroy({

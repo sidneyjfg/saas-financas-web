@@ -119,6 +119,7 @@ class TransactionController {
     const filePath = req.file.path;
 
     try {
+      console.log("Arquivo recebido com sucesso!");
       const totalTransactions = await transactionService.importTransactionsFromCSV(
         filePath,
         req.user.id // Passa o ID do usuário autenticado

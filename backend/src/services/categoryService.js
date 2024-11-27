@@ -5,7 +5,7 @@ const CATEGORY_LIMITS = {
 };
 
 class CategoryService {
-  
+
   // Listar categorias Premium
   async getPremiumCategories(userId) {
     return await categoryRepository.findAllPremiumByUser(userId);
@@ -16,8 +16,8 @@ class CategoryService {
     return await categoryRepository.findAllBasicByUser(userId);
   }
 
-  // Criar nova categoria
-  async createCategory({ name, color, userId, userPlan }) {
+  
+  async createCategory({ name, color, keywords, userId, userPlan }) {
     // Verificar o número atual de categorias
     const currentCategoryCount = await categoryRepository.countByUser(userId);
   
@@ -31,14 +31,22 @@ class CategoryService {
       );
     }
   
-    // Criar a categoria se o limite não foi atingido
-    return await categoryRepository.create({ name, color, userId });
-  } 
+    // Criar a categoria
+    return await categoryRepository.create({ name, color, keywords, userId });
+  }
+  
 
   // Atualizar categoria existente
   async updateCategory(id, categoryData) {
-    return await categoryRepository.update(id, categoryData);
+    try {
+      // Chamar o repositório para atualizar os dados
+      return await categoryRepository.update(id, categoryData);
+    } catch (error) {
+      console.error("Error in updateCategory service:", error.message);
+      throw error;
+    }
   }
+
 
   // Excluir categoria
   async deleteCategory(id, userId) {

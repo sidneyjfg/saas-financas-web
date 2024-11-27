@@ -1,4 +1,5 @@
 const transactionRepository = require('../repositories/transactionRepository');
+const categoryRepository = require('../repositories/categoryRepository');
 const goalRepository = require('../repositories/goalRepository');
 const fs = require('fs');
 const csv = require('csv-parser'); // Verifique se a biblioteca `csv-parser` está instalada.
@@ -99,43 +100,54 @@ class TransactionService {
 
     async importTransactionsFromCSV(filePath, userId) {
         const transactions = [];
-    
-        // Ler e processar o CSV da Nubank
-        await new Promise((resolve, reject) => {
-          fs.createReadStream(filePath)
-            .pipe(csv())
-            .on("data", (row) => {
-              if (row.date && row.title && row.amount) {
-                transactions.push({
-                  date: row.date,
-                  type: parseFloat(row.amount) < 0 ? "expense" : "income", // Define tipo baseado no valor
-                  category: "Nubank", // Categoria padrão para transações importadas
-                  amount: Math.abs(parseFloat(row.amount)), // Remove o sinal negativo
-                  description: row.title,
-                  userId, // Associa ao usuário autenticado
-                });
-              }
-            })
-            .on("end", resolve)
-            .on("error", reject);
-        });
-    
-        // Processar transações
-        for (const transaction of transactions) {
-          let category = await transactionRepository.findCategoryByName(transaction.category);
-    
-          if (!category) {
-            category = await transactionRepository.createCategory(transaction.category);
-          }
-    
-          await transactionRepository.create({
-            ...transaction,
-            categoryId: category.id,
-          });
+        const categories = await categoryRepository.findAllPremiumByUser(userId);
+
+        // Verifica se a categoria Nubank já existe ou cria
+        console.log("cheguei");
+        let nubankCategory = categories.find((cat) => cat.name === "Nubank");
+        if (!nubankCategory) {
+            nubankCategory = await categoryRepository.create({
+                name: "Nubank",
+                color: "#8A2BE2", // Cor roxa
+                userId,
+            });
         }
-    
-        return transactions.length; // Retorna o total de transações importadas
-      }
+
+        // Ler e processar o CSV
+        await new Promise((resolve, reject) => {
+            fs.createReadStream(filePath)
+                .pipe(csv())
+                .on("data", (row) => {
+                    if (row.date && row.amount && row.title) {
+                        // Determinar a categoria com base nas palavras-chave
+                        const matchedCategory = categories.find((category) => {
+                            const keywords = category.keywords ? category.keywords.split(",") : [];
+                            return keywords.some((keyword) =>
+                                row.title.toLowerCase().includes(keyword.toLowerCase())
+                            );
+                        });
+
+                        transactions.push({
+                            date: new Date(row.date),
+                            type: parseFloat(row.amount) > 0 ? "income" : "expense",
+                            categoryId: matchedCategory ? matchedCategory.id : nubankCategory.id,
+                            amount: Math.abs(parseFloat(row.amount)),
+                            description: row.title,
+                            userId,
+                        });
+                    }
+                })
+                .on("end", resolve)
+                .on("error", reject);
+        });
+
+        // Inserir as transações no banco
+        for (const transaction of transactions) {
+            await transactionRepository.create(transaction);
+        }
+
+        return transactions.length;
+    }
 }
 
 module.exports = new TransactionService();

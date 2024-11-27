@@ -17,6 +17,11 @@ module.exports = {
         type: Sequelize.STRING,
         allowNull: true,
       },
+      keywords: {
+        type: Sequelize.JSON, // Usando JSON para armazenar palavras-chave
+        allowNull: true, // Pode ser nulo inicialmente
+        defaultValue: [], // Por padrão, uma lista vazia
+      },
       userId: {
         type: Sequelize.INTEGER,
         references: {

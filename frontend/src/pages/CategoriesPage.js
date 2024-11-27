@@ -6,10 +6,15 @@ const CATEGORY_LIMITS = {
   Basic: 5, // Limite de categorias para o plano básico
   Premium: Infinity, // Sem limite para o plano Premium
 };
+
 export const CategoriesPage = () => {
   const { userPlan } = useAuth(); // Recupera o plano do usuário
   const [categories, setCategories] = useState([]);
-  const [newCategory, setNewCategory] = useState({ name: "", color: "" });
+  const [newCategory, setNewCategory] = useState({
+    name: "",
+    color: "",
+    keywords: "",
+  });
   const [editingCategory, setEditingCategory] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -20,33 +25,47 @@ export const CategoriesPage = () => {
     const fetchCategories = async () => {
       try {
         const endpoint =
-          userPlan === "Basic" ? "/categories/basic" : "/categories/premium"; // Diferencia endpoint por plano
+          userPlan === "Basic" ? "/categories/basic" : "/categories/premium";
         const response = await api.get(endpoint);
         console.log("Categorias carregadas:", response.data);
-        setCategories(response.data);
+  
+        // Atualiza o estado das categorias
+        setCategories(
+          response.data.map((category) => ({
+            ...category,
+            keywords: category.keywords ? category.keywords.join(", ") : "", // Certifique-se de que 'keywords' está sendo tratado
+          }))
+        );
       } catch (error) {
         console.error("Erro ao carregar categorias:", error);
       } finally {
         setLoading(false);
       }
     };
-
+  
     fetchCategories();
   }, [userPlan]);
+  
 
   // Create or Update Category
   const handleSaveCategory = async () => {
     if (!newCategory.name.trim()) {
-      alert("O nome da categoria é obrigatório."); // Mudar para toastfy ou similar no futuro
+      alert("O nome da categoria é obrigatório.");
       return;
     }
-  
+
+    if (!newCategory.keywords.trim()) {
+      alert("Adicione ao menos uma palavra-chave.");
+      return;
+    }
+
     // Definir cor padrão como preta (#000000) caso não seja fornecida
     const categoryData = {
       ...newCategory,
       color: newCategory.color || "#000000", // Cor padrão
+      keywords: newCategory.keywords.split(",").map((keyword) => keyword.trim()), // Converte para array
     };
-  
+
     try {
       if (editingCategory) {
         // Atualizar categoria existente
@@ -54,25 +73,22 @@ export const CategoriesPage = () => {
       } else {
         // Criar nova categoria
         console.log("Criando categoria:", categoryData);
-        try {
-          await api.post("/categories", categoryData);
-        } catch (error) {
-          if (error.response?.status === 400) {
-            alert(error.response.data.message);
-          } else {
-            console.error("Erro ao criar categoria:", error);
-          }
-        }
+        await api.post("/categories", categoryData);
       }
-  
+
       // Atualizar lista de categorias
       const endpoint =
         userPlan === "Basic" ? "/categories/basic" : "/categories/premium";
       const response = await api.get(endpoint);
-      setCategories(response.data);
-  
+      setCategories(
+        response.data.map((category) => ({
+          ...category,
+          keywords: category.keywords ? category.keywords.join(", ") : "", // Converte array para string
+        }))
+      );
+
       // Resetar o formulário
-      setNewCategory({ name: "", color: "" });
+      setNewCategory({ name: "", color: "", keywords: "" });
       setEditingCategory(null);
     } catch (error) {
       console.error("Erro ao salvar categoria:", error);
@@ -81,7 +97,11 @@ export const CategoriesPage = () => {
 
   // Edit Category
   const handleEditCategory = (category) => {
-    setNewCategory({ name: category.name, color: category.color });
+    setNewCategory({
+      name: category.name,
+      color: category.color,
+      keywords: category.keywords, // Já está formatado como string
+    });
     setEditingCategory(category);
   };
 
@@ -131,6 +151,14 @@ export const CategoriesPage = () => {
                 setNewCategory({ ...newCategory, color: e.target.value })
               }
             />
+            <textarea
+              className="border-gray-300 border rounded-lg p-2"
+              placeholder="Palavras-chave (separadas por vírgula)"
+              value={newCategory.keywords}
+              onChange={(e) =>
+                setNewCategory({ ...newCategory, keywords: e.target.value })
+              }
+            />
             <button
               onClick={handleSaveCategory}
               className="px-4 py-2 bg-teal-600 text-white font-bold rounded-lg shadow-md hover:bg-teal-700 transition-all duration-300"
@@ -152,14 +180,19 @@ export const CategoriesPage = () => {
                 key={category.id}
                 className="bg-white p-4 shadow-lg rounded-lg flex justify-between items-center"
               >
-                <div className="flex items-center gap-4">
-                  <div
-                    className="w-6 h-6 rounded-full"
-                    style={{ backgroundColor: category.color }}
-                  ></div>
-                  <span className="text-gray-700 font-bold">
-                    {category.name}
-                  </span>
+                <div>
+                  <div className="flex items-center gap-4">
+                    <div
+                      className="w-6 h-6 rounded-full"
+                      style={{ backgroundColor: category.color }}
+                    ></div>
+                    <span className="text-gray-700 font-bold">
+                      {category.name}
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-500">
+                    Palavras-chave: {category.keywords}
+                  </p>
                 </div>
                 <div className="flex gap-2">
                   <button
