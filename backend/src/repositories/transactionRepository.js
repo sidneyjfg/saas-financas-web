@@ -73,6 +73,7 @@ class TransactionRepository {
         'type',                                                 // Tipo (income/expense)
         [Sequelize.col('category.id'), 'categoryId'],           // ID da categoria
         [Sequelize.col('category.name'), 'categoryName'],       // Nome da categoria
+        [Sequelize.col('category.color'), 'categoryColor'],     // Cor da categoria
         'description',                                          // Descrição da transação
         [Sequelize.fn('SUM', Sequelize.col('amount')), 'total'], // Soma dos valores
       ],

@@ -63,7 +63,7 @@ const PremiumReports = ({ data: initialData, goalsData }) => {
   // Atualiza o resumo de despesas e rendimentos
   useEffect(() => {
     const totalIncome = filteredData
-    .filter((item) => {
+      .filter((item) => {
         const isIncome = item.type === "income";
         const isNotGoal = !goalsData.some(
           (goal) => String(goal.category.id) === String(item.categoryId)
@@ -71,18 +71,18 @@ const PremiumReports = ({ data: initialData, goalsData }) => {
         return isIncome && isNotGoal;
       })
       .reduce((sum, item) => sum + parseFloat(item.total), 0);
-  
+
     const totalExpenses = filteredData
       .filter((item) => item.type === "expense")
       .reduce((sum, item) => sum + parseFloat(item.total), 0);
-  
+
     const totalGoal = (goalsData || [])
       .reduce((sum, goal) => sum + parseFloat(goal.targetAmount || 0), 0);
-      
+
     setSummary({ totalIncome, totalExpenses, totalGoal });
   }, [filteredData, goalsData]);
-  
-  
+
+
 
   const labels = [...new Set(data.map((item) => `${item.year}/${monthNames[item.month - 1]}`))];
 
@@ -100,7 +100,7 @@ const PremiumReports = ({ data: initialData, goalsData }) => {
       )
       .reduce((sum, item) => sum + parseFloat(item.total), 0);
   });
-  
+
   const expenseData = labels.map((label) => {
     return data
       .filter(
@@ -110,7 +110,7 @@ const PremiumReports = ({ data: initialData, goalsData }) => {
       )
       .reduce((sum, item) => sum + parseFloat(item.total), 0);
   });
-  
+
   // Dados para o gráfico de barras
   const datasets = [
     {
@@ -151,25 +151,27 @@ const PremiumReports = ({ data: initialData, goalsData }) => {
   const categoryExpenses = filteredData.filter((item) => item.type === "expense");
   const totalExpenses = categoryExpenses.reduce((sum, item) => sum + parseFloat(item.total), 0);
 
+  // Labels das categorias únicas
+  const categoryLabels = [...new Set(categoryExpenses.map((item) => item.categoryName))];
+
+  // Mapeia as cores das categorias com base nos dados
+  const categoryColors = categoryLabels.map((category) => {
+    const categoryItem = categoryExpenses.find((item) => item.categoryName === category);
+    return categoryItem?.categoryColor || "rgba(200, 200, 200, 0.7)"; // Cor padrão se não houver cor
+  });
+
+  // Dados do gráfico de pizza
   const categoryData = {
-    labels: [...new Set(categoryExpenses.map((item) => item.categoryName))],
+    labels: categoryLabels,
     datasets: [
       {
-        data: [...new Set(categoryExpenses.map((item) => item.categoryName))]
-          .map((category) => {
-            const totalCategory = categoryExpenses
-              .filter((item) => item.categoryName === category)
-              .reduce((sum, item) => sum + parseFloat(item.total), 0);
-            return ((totalCategory / totalExpenses) * 100).toFixed(2); // Porcentagem
-          }),
-        backgroundColor: [
-          "rgba(255, 99, 132, 0.7)",
-          "rgba(54, 162, 235, 0.7)",
-          "rgba(255, 206, 86, 0.7)",
-          "rgba(75, 192, 192, 0.7)",
-          "rgba(153, 102, 255, 0.7)",
-          "rgba(255, 159, 64, 0.7)",
-        ],
+        data: categoryLabels.map((category) => {
+          const totalCategory = categoryExpenses
+            .filter((item) => item.categoryName === category)
+            .reduce((sum, item) => sum + parseFloat(item.total), 0);
+          return ((totalCategory / totalExpenses) * 100).toFixed(2); // Porcentagem
+        }),
+        backgroundColor: categoryColors, // Define as cores do gráfico
         borderWidth: 1,
       },
     ],
