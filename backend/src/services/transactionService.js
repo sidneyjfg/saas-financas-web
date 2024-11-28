@@ -1,6 +1,7 @@
 const transactionRepository = require('../repositories/transactionRepository');
 const categoryRepository = require('../repositories/categoryRepository');
 const goalRepository = require('../repositories/goalRepository');
+const { FileHashes } = require('../models');
 const fs = require('fs');
 const csv = require('csv-parser'); // Verifique se a biblioteca `csv-parser` está instalada.
 const { use } = require('../routes/transactionRoutes');
@@ -57,25 +58,25 @@ class TransactionService {
         if (!Number.isInteger(transactionData.categoryId)) {
             throw new Error("categoryId deve ser um número válido.");
         }
-    
+
         console.log("Dados recebidos no serviço para atualização:", transactionData);
-    
+
         const transaction = await transactionRepository.findById(id);
-    
+
         if (!transaction) {
             throw new Error("Transação não encontrada");
         }
-    
+
         await transactionRepository.update(id, transactionData, transactionData.userId);
-    
+
         // Atualizar progresso da meta, se aplicável
         if (transactionData.categoryId) {
             await this.updateGoalProgress(transactionData.userId, transactionData.categoryId);
         }
-    
+
         return transaction;
     }
-    
+
 
     // Excluir uma transação
     async deleteTransaction(id, userId) {
@@ -102,21 +103,21 @@ class TransactionService {
         if (!userId || !categoryId) {
             throw new Error("Usuário ou categoria inválidos para atualizar progresso da meta.");
         }
-    
+
         // Obtém o total das transações por tipo para a categoria
         const totalIncome = await transactionRepository.getTotalByCategoryAndType(userId, categoryId, 'income');
         const totalExpense = await transactionRepository.getTotalByCategoryAndType(userId, categoryId, 'expense');
-    
+
         // Busca a meta vinculada à categoria
         const goal = await goalRepository.findByCategory(userId, categoryId); // Passar userId aqui
-    
+
         if (goal) {
             // Atualiza o progresso da meta (somando receitas e subtraindo despesas)
             goal.progress = totalIncome - totalExpense;
             await goal.save();
         }
     }
-    
+
 
 
 
@@ -137,9 +138,11 @@ class TransactionService {
 
     async importTransactionsFromCSV(filePath, userId) {
         const transactions = [];
+
+        // Busca todas as categorias do usuário (Premium)
         const categories = await categoryRepository.findAllPremiumByUser(userId);
 
-        // Verifica se a categoria Nubank já existe ou cria
+        // Verifica se a categoria "Nubank" já existe ou cria
         let nubankCategory = categories.find((cat) => cat.name === "Nubank");
         if (!nubankCategory) {
             nubankCategory = await categoryRepository.create({
@@ -147,53 +150,62 @@ class TransactionService {
                 color: "#8A2BE2", // Cor roxa
                 userId,
             });
+
+            // Atualiza a lista de categorias com a nova
+            categories.push(nubankCategory);
         }
 
-        // Ler e processar o CSV
+        // Processar o CSV
         await new Promise((resolve, reject) => {
             fs.createReadStream(filePath)
                 .pipe(csv())
                 .on("data", (row) => {
-                    if (row.date && row.amount && row.title) {
-                        // Determinar a categoria com base nas palavras-chave
-                        const matchedCategory = categories.find((category) => {
-                            // Corrige o erro no `split`, garantindo que `category.keywords` seja string
-                            const keywords =
-                                typeof category.keywords === "string"
-                                    ? category.keywords.split(",")
-                                    : [];
-                            return keywords.some((keyword) =>
-                                row.title.toLowerCase().includes(keyword.toLowerCase())
-                            );
-                        });
+                    try {
+                        // Validação de campos obrigatórios
+                        if (row.date && row.amount && row.title) {
+                            const titleLower = row.title.toLowerCase();
 
-                        // Determinar o tipo de transação
-                        const transactionType =
-                            row.title.toLowerCase() === "pagamento recebido"
+                            // Encontrar a categoria com base nas palavras-chave
+                            const matchedCategory = categories.find((category) => {
+                                const keywords =
+                                    typeof category.keywords === "string"
+                                        ? category.keywords.split(",").map((k) => k.trim().toLowerCase())
+                                        : [];
+                                return keywords.some((keyword) => titleLower.includes(keyword));
+                            });
+
+                            // Determinar o tipo de transação
+                            const transactionType = titleLower === "pagamento recebido"
                                 ? "income"
                                 : "expense";
 
-                        transactions.push({
-                            date: new Date(row.date),
-                            type: transactionType, // Define como despesa ou receita
-                            categoryId: matchedCategory ? matchedCategory.id : nubankCategory.id,
-                            amount: Math.abs(parseFloat(row.amount)),
-                            description: row.title,
-                            userId,
-                        });
+                            // Adicionar a transação ao array
+                            transactions.push({
+                                date: new Date(row.date),
+                                type: transactionType,
+                                categoryId: matchedCategory ? matchedCategory.id : nubankCategory.id,
+                                amount: Math.abs(parseFloat(row.amount)),
+                                description: row.title,
+                                userId,
+                            });
+                        }
+                    } catch (error) {
+                        console.error("Erro ao processar linha do CSV:", row, error.message);
                     }
                 })
                 .on("end", resolve)
                 .on("error", reject);
         });
 
-        // Inserir as transações no banco
-        for (const transaction of transactions) {
-            await transactionRepository.create(transaction);
+        // Inserir todas as transações no banco de dados
+        if (transactions.length > 0) {
+            await transactionRepository.bulkCreate(transactions);
         }
 
         return transactions.length;
     }
+
+
 
     async updateCategories(userId) {
         console.log("Toma o userID: ", userId);
@@ -226,6 +238,14 @@ class TransactionService {
 
         console.log("Categorias atualizadas: ", updatedCount);
         return updatedCount;
+    }
+
+    async checkFileHash(hash) {
+        const existingFile = await FileHashes.findOne({ where: { hash } });
+        return !!existingFile;
+    }
+    async saveFileHash(hash) {
+        await FileHashes.create({ hash });
     }
 
 }

@@ -132,6 +132,9 @@ class TransactionRepository {
       where: { id, userId },
     });
   }
+  async bulkCreate(transactions) {
+    return await Transaction.bulkCreate(transactions);
+}
 
 
 }

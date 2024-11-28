@@ -23,33 +23,38 @@ export const TransactionsPage = () => {
     const { triggerReload } = useReport();
 
     const handleFileUpload = async (event) => {
-        const file = event.target?.files?.[0]; // Certifica-se de que o arquivo existe
+        const file = event.target?.files?.[0];
         if (!file) {
             alert("Nenhum arquivo selecionado.");
             return;
         }
-
+    
         try {
             const formData = new FormData();
             formData.append("file", file);
-
+            console.log(formData);
             const response = await api.post("/transactions/import", formData, {
                 headers: { "Content-Type": "multipart/form-data" },
             });
-
+    
             alert("Arquivo importado com sucesso!");
             console.log("Resposta do servidor:", response.data);
-
+    
             // Atualizar transações após importação
             const transactionsResponse = await api.get("/transactions");
             setTransactions(transactionsResponse.data);
         } catch (error) {
-            const errorMessage =
-                error.response?.data?.error || "Erro ao importar o arquivo.";
-            alert(errorMessage);
+            if (error.response?.data?.error === "Arquivo já foi importado.") {
+                alert("Este arquivo já foi importado anteriormente.");
+            } else {
+                const errorMessage =
+                    error.response?.data?.error || "Erro ao importar o arquivo.";
+                alert(errorMessage);
+            }
             console.error("Erro ao importar arquivo:", error);
         }
     };
+    
 
 
     // Buscar Transações, Categorias e Metas

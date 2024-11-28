@@ -1,5 +1,7 @@
 const transactionService = require('../services/transactionService');
 const fs = require("fs");
+const crypto = require("crypto");
+
 
 class TransactionController {
   // Relatório mensal básico
@@ -147,10 +149,27 @@ class TransactionController {
 
     try {
       console.log("Arquivo recebido com sucesso!");
+
+      // Calcula o hash do arquivo recebido
+      const fileBuffer = fs.readFileSync(filePath);
+      const fileHash = crypto.createHash("sha256").update(fileBuffer).digest("hex");
+
+      // Verifica se o hash do arquivo já foi processado anteriormente
+      const isDuplicate = await transactionService.checkFileHash(fileHash);
+      if (isDuplicate) {
+        // Remove o arquivo temporário e retorna erro
+        fs.unlinkSync(filePath);
+        return res.status(400).json({ error: "Este arquivo já foi importado anteriormente." });
+      }
+
+      // Processa as transações do CSV
       const totalTransactions = await transactionService.importTransactionsFromCSV(
         filePath,
         req.user.id // Passa o ID do usuário autenticado
       );
+
+      // Salva o hash no banco de dados
+      await transactionService.saveFileHash(fileHash);
 
       // Remove o arquivo após processar
       fs.unlinkSync(filePath);
@@ -160,6 +179,12 @@ class TransactionController {
       });
     } catch (error) {
       console.error("Erro ao importar CSV:", error);
+
+      // Remove o arquivo temporário em caso de erro
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+
       return res.status(500).json({ error: "Erro ao importar CSV." });
     }
   }
