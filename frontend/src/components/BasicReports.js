@@ -22,8 +22,6 @@ const BasicReports = ({ data, goalsData }) => {
   }, [data, selectedCategory, selectedMonth]);
 
   useEffect(() => {
-    console.log("Filtered Data (Before Income Calculation):", filteredData);
-
     const totalIncome = filteredData
       .filter((item) => {
         const isIncome = item.type === "income";
@@ -33,8 +31,6 @@ const BasicReports = ({ data, goalsData }) => {
         return isIncome && isNotGoal;
       })
       .reduce((acc, item) => acc + parseFloat(item.total), 0);
-
-    console.log("Filtered Data (Income):", totalIncome);
 
     const totalExpense = filteredData
       .filter((item) => item.type === "expense")

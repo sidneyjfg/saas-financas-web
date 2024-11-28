@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { showErrorToast, showInfoToast, showSuccessToast, showWarningToast } from "../utils/toast";
+import { showConfirmDialog } from "../utils/confirmDialog";
 import { FiRefreshCcw } from "react-icons/fi"; // Biblioteca react-icons
 import api from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
@@ -25,36 +27,33 @@ export const TransactionsPage = () => {
     const handleFileUpload = async (event) => {
         const file = event.target?.files?.[0];
         if (!file) {
-            alert("Nenhum arquivo selecionado.");
+            showWarningToast("Nenhum arquivo selecionado.");
             return;
         }
-    
+
         try {
             const formData = new FormData();
             formData.append("file", file);
-            console.log(formData);
-            const response = await api.post("/transactions/import", formData, {
+            await api.post("/transactions/import", formData, {
                 headers: { "Content-Type": "multipart/form-data" },
             });
-    
-            alert("Arquivo importado com sucesso!");
-            console.log("Resposta do servidor:", response.data);
-    
+
+            showSuccessToast("Arquivo importado com sucesso!");
+
             // Atualizar transações após importação
             const transactionsResponse = await api.get("/transactions");
             setTransactions(transactionsResponse.data);
         } catch (error) {
             if (error.response?.data?.error === "Arquivo já foi importado.") {
-                alert("Este arquivo já foi importado anteriormente.");
+                showWarningToast("Este arquivo já foi importado anteriormente.");
             } else {
                 const errorMessage =
                     error.response?.data?.error || "Erro ao importar o arquivo.";
-                alert(errorMessage);
+                showWarningToast(errorMessage);
             }
-            console.error("Erro ao importar arquivo:", error);
         }
     };
-    
+
 
 
     // Buscar Transações, Categorias e Metas
@@ -67,14 +66,15 @@ export const TransactionsPage = () => {
                 const categoryEndpoint =
                     userPlan === "Basic" ? "/categories/basic" : "/categories/premium";
                 const categoriesResponse = await api.get(categoryEndpoint);
-                console.log("Categorias Existentes: ", categoriesResponse.data);
                 setCategories(categoriesResponse.data);
 
                 // Buscar transações
                 const transactionsResponse = await api.get("/transactions");
                 setTransactions(transactionsResponse.data);
             } catch (error) {
-                console.error("Erro ao carregar dados:", error);
+                const errorMessage =
+                    error.response?.data?.error
+                showErrorToast("Erro ao carregar dados: ", errorMessage);
             } finally {
                 setLoading(false);
             }
@@ -88,10 +88,10 @@ export const TransactionsPage = () => {
         try {
             // Verificar se todos os campos obrigatórios estão preenchidos
             if (!newTransaction.date || !newTransaction.amount || !newTransaction.category) {
-                alert("Preencha todos os campos obrigatórios.");
+                showWarningToast("Preencha todos os campos obrigatórios.");
                 return;
             }
-    
+
             // Preparar os dados para envio
             const transactionPayload = {
                 date: newTransaction.date,
@@ -100,22 +100,21 @@ export const TransactionsPage = () => {
                 description: newTransaction.description || "",
                 categoryId: newTransaction.category?.id || newTransaction.category
             };
-    
+
             if (editingTransaction) {
                 // Atualizar transação existente
-                console.log("Atualizando transação: ", transactionPayload);
                 await api.put(`/transactions/${editingTransaction.id}`, transactionPayload);
+                showSuccessToast("Transação atualizada com sucesso!");
             } else {
                 // Criar nova transação
-                console.log("Criando nova transação: ", transactionPayload);
                 await api.post("/transactions", transactionPayload);
-                console.log("Criada");
+                showSuccessToast("Transação criada com sucesso!");
             }
-    
+
             // Recarregar dados após salvar
             const transactionsResponse = await api.get("/transactions");
             setTransactions(transactionsResponse.data);
-    
+
             // Resetar o formulário
             setNewTransaction({
                 date: "",
@@ -126,19 +125,18 @@ export const TransactionsPage = () => {
             });
             setEditingTransaction(null);
         } catch (error) {
-            console.error("Erro ao salvar transação:", error);
-            alert("Erro ao salvar transação. Verifique os dados e tente novamente.");
+            const errorMessage =
+                    error.response?.data?.error
+            showErrorToast("Erro ao salvar transação. Verifique os dados e tente novamente.\n",errorMessage);
         }
     };
-    
+
 
 
     const handleUpdateCategories = async () => {
         try {
-            const response = await api.put("/transactions/update-categories");
-            alert("Categorias atualizadas com sucesso!");
-            console.log("Resposta do servidor:", response.data);
-
+            await api.put("/transactions/update-categories");
+            
             // Dispara o reload para o contexto
             // Atualizar a lista de transações após a atualização
             const transactionsResponse = await api.get("/transactions");
@@ -147,8 +145,7 @@ export const TransactionsPage = () => {
         } catch (error) {
             const errorMessage =
                 error.response?.data?.error || "Erro ao atualizar as categorias.";
-            alert(errorMessage);
-            console.error("Erro ao atualizar categorias:", error);
+            showErrorToast(errorMessage);
         }
     };
 
@@ -166,17 +163,27 @@ export const TransactionsPage = () => {
     };
 
     // Remover Transação
-    const handleDeleteTransaction = async (id) => {
-        if (window.confirm("Tem certeza que deseja excluir esta transação?")) {
+    const handleDeleteTransaction = (id) => {
+        showConfirmDialog({
+          title: "Confirmar Exclusão",
+          message: "Tem certeza que deseja excluir esta transação?",
+          onConfirm: async () => {
             try {
-                await api.delete(`/transactions/${id}`);
-                setTransactions(transactions.filter((transaction) => transaction.id !== id));
-
+              await api.delete(`/transactions/${id}`);
+              setTransactions((prevTransactions) =>
+                prevTransactions.filter((transaction) => transaction.id !== id)
+              );
+              showSuccessToast("Transação removida com sucesso.");
             } catch (error) {
-                console.error("Erro ao excluir transação:", error);
+              const errorMessage = error.response?.data?.error || "Erro desconhecido.";
+              showErrorToast(`Erro ao excluir transação: ${errorMessage}`);
             }
-        }
-    };
+          },
+          onCancel: () => {
+            showInfoToast("Ação cancelada."); // Opcional
+          },
+        });
+      };
 
     // Filtrar Transações
     const filteredTransactions = transactions.filter((transaction) => {

@@ -244,7 +244,7 @@ const PremiumReports = ({ data: initialData, goalsData }) => {
             className="border border-gray-300 px-4 py-2 rounded w-full"
           >
             <option value="">All Months</option>
-            {[...new Set(data.map((item) => `${item.year}/${monthNames[item.month - 1]}`))].map(
+            {[...new Set(data.map((item) => `${monthNames[item.month - 1]}/${item.year}`))].map(
               (month) => (
                 <option key={month} value={month}>
                   {month}

@@ -1,23 +1,24 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
+import { showSuccessToast, showErrorToast } from "../utils/toast";
+
 
 export const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState(null);
   const { signIn } = useAuth(); // O signIn agora chama o backend
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      console.log("Submitting login form... | ",email,password);
       await signIn(email, password); // Passa email e senha para o signIn
+      showSuccessToast("Login realizado com sucesso!");
       navigate("/reports"); // Redireciona após login bem-sucedido
     } catch (err) {
       console.error("Login failed:", err.message);
-      setError(err.message || "Login failed");
+      showErrorToast("E-mail ou senha incorretos!");
     }
   };
 
@@ -27,7 +28,6 @@ export const LoginPage = () => {
         <h2 className="text-2xl font-bold text-gray-800 text-center mb-6">
           Welcome Back!
         </h2>
-        {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label

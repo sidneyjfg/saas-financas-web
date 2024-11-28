@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { showSuccessToast, showErrorToast } from "../utils/toast";
 import api from '../services/api';
 import { useAuth } from "../contexts/AuthContext";
 import { formatDate, formatCurrency } from "../utils/index"
@@ -41,45 +42,46 @@ export const GoalsPage = () => {
 
   const handleSaveGoal = async () => {
     try {
-        if (!newGoal.name || !newGoal.targetAmount || isNaN(newGoal.targetAmount)) {
-            alert('Preencha todos os campos obrigatórios e insira um valor válido.');
-            return;
-        }
+      if (!newGoal.name || !newGoal.targetAmount || isNaN(newGoal.targetAmount)) {
+        alert('Preencha todos os campos obrigatórios e insira um valor válido.');
+        return;
+      }
 
-        let categoryId = newGoal.categoryId;
+      let categoryId = newGoal.categoryId;
 
-        // Criar uma nova categoria automaticamente, se necessário
-        if (!categoryId) {
-            const categoryResponse = await api.post('/categories', {
-                name: `Meta: ${newGoal.name}`,
-                color: '#4CAF50',
-            });
-            categoryId = categoryResponse.data.id;
-        }
+      // Criar uma nova categoria automaticamente, se necessário
+      if (!categoryId) {
+        const categoryResponse = await api.post('/categories', {
+          name: `Meta: ${newGoal.name}`,
+          color: '#4CAF50',
+        });
+        showSuccessToast(`Categoria automática: Meta: ${newGoal.name}\ncriada com sucesso!`);
+        categoryId = categoryResponse.data.id;
+      }
 
-        const goalData = { ...newGoal, categoryId };
+      const goalData = { ...newGoal, categoryId };
 
-        // Salvar ou atualizar a meta
-        if (editingGoalId) {
-            await api.put(`/goals/${editingGoalId}`, goalData);
-        } else {
-            await api.post('/goals', goalData);
-        }
+      // Salvar ou atualizar a meta
+      if (editingGoalId) {
+        await api.put(`/goals/${editingGoalId}`, goalData);
+        showSuccessToast(`Meta atualizada com sucesso!`);
+      } else {
+        await api.post('/goals', goalData);
+        showSuccessToast(`Meta criada com sucesso!`);
+      }
 
-        const response = await api.get('/goals');
-        setGoals(response.data);
+      const response = await api.get('/goals');
+      setGoals(response.data);
 
-        setNewGoal({ name: '', targetAmount: '', deadline: '', categoryId: '' });
-        setEditingGoalId(null);
+      setNewGoal({ name: '', targetAmount: '', deadline: '', categoryId: '' });
+      setEditingGoalId(null);
     } catch (error) {
-        console.error('Erro ao salvar meta:', error);
-
-        // Exibe erro do backend ao usuário
-        alert(error.response?.data?.error || 'Erro ao salvar meta. Tente novamente.');
+      console.error('Erro ao salvar meta:', error);
+      showErrorToast("Erro ao salvar meta. Tente novamente!\n", error.response?.data?.error);
     }
-};
+  };
 
-  
+
 
   const handleDeleteGoal = async (id) => {
     if (window.confirm('Tem certeza que deseja excluir esta meta?')) {

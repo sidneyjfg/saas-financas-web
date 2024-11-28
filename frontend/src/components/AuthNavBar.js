@@ -1,4 +1,5 @@
 import { NavLink, useNavigate } from "react-router-dom";
+import { showSuccessToast } from "../utils/toast";
 import { useAuth } from "../contexts/AuthContext";
 
 const AuthNavbar = () => {
@@ -6,6 +7,7 @@ const AuthNavbar = () => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
+    showSuccessToast("Desconectado com sucesso.");
     signOut();
     navigate("/signin");
   };

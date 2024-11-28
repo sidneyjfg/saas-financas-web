@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import api from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
+import { showErrorToast, showInfoToast, showSuccessToast, showWarningToast } from "../utils/toast";
 
 const CATEGORY_LIMITS = {
   Basic: 5, // Limite de categorias para o plano básico
@@ -27,7 +28,7 @@ export const CategoriesPage = () => {
         const endpoint =
           userPlan === "Basic" ? "/categories/basic" : "/categories/premium";
         const response = await api.get(endpoint);
-        console.log("Categorias carregadas:", response.data);
+        showInfoToast("Categorias carregadas");
   
         // Atualiza o estado das categorias
         setCategories(
@@ -50,12 +51,12 @@ export const CategoriesPage = () => {
   // Create or Update Category
   const handleSaveCategory = async () => {
     if (!newCategory.name.trim()) {
-      alert("O nome da categoria é obrigatório.");
+      showWarningToast("O nome da categoria é obrigatório.");
       return;
     }
 
     if (!newCategory.keywords.trim()) {
-      alert("Adicione ao menos uma palavra-chave.");
+      showWarningToast("Adicione ao menos uma palavra-chave.");
       return;
     }
 
@@ -70,10 +71,12 @@ export const CategoriesPage = () => {
       if (editingCategory) {
         // Atualizar categoria existente
         await api.put(`/categories/${editingCategory.id}`, categoryData);
+        showSuccessToast("Categoria atualizada com sucesso!");
       } else {
         // Criar nova categoria
         console.log("Criando categoria:", categoryData);
         await api.post("/categories", categoryData);
+        showSuccessToast("Categoria criada com sucesso!");
       }
 
       // Atualizar lista de categorias
@@ -109,9 +112,10 @@ export const CategoriesPage = () => {
   const handleDeleteCategory = async (id) => {
     try {
       await api.delete(`/categories/${id}`);
+      showSuccessToast("Categoria removida com sucesso!");
       setCategories(categories.filter((category) => category.id !== id));
     } catch (error) {
-      console.error("Erro ao excluir categoria:", error);
+      showErrorToast("Erro ao excluir categoria:", error);
     }
   };
 

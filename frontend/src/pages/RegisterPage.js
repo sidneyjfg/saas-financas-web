@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { showSuccessToast, showErrorToast } from "../utils/toast";
 import { Link, useNavigate } from "react-router-dom";
 import { register } from "../services/authService";
 
@@ -9,8 +10,6 @@ export const RegisterPage = () => {
     password: "",
     planId: 1, // ID padrão do plano básico
   });
-
-  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -32,10 +31,11 @@ export const RegisterPage = () => {
         formData.password,
         formData.planId
       );
+      showSuccessToast("Registro realizado com sucesso!");
       navigate("/signin");
     } catch (err) {
       console.error("Registration error:", err.response?.data || err.message);
-      setError(err.response?.data?.message || "An error occurred");
+      showErrorToast("Erro ao realizar o registro: ", err.response?.data?.message)
     }
   };
 
@@ -45,7 +45,6 @@ export const RegisterPage = () => {
         <h2 className="text-2xl font-bold text-gray-800 text-center mb-6">
           Create Your Account
         </h2>
-        {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label

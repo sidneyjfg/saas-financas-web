@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
+import { showSuccessToast, showErrorToast } from "../utils/toast";
 import { useAuth } from "../contexts/AuthContext";
 import { useReport } from "../contexts/ReportContext";
 import { useNavigate } from "react-router-dom";
@@ -40,6 +41,7 @@ export const ReportsPage = () => {
       setGoals(goalsResponse.data);
     } catch (error) {
       console.error("Error reloading report data:", error);
+      showErrorToast("Erro ao carregar relatórios!\nTente novamente mais tarde.");
     } finally {
       setLoading(false);
     }
@@ -47,7 +49,6 @@ export const ReportsPage = () => {
 
   useEffect(() => {
     if (!userPlan) {
-      console.log("No user plan found. Redirecting...");
       navigate("/signin");
     }
   }, [userPlan, navigate]);
@@ -59,7 +60,6 @@ export const ReportsPage = () => {
 
   // Recarregar dados quando o estado `shouldReload` mudar
   useEffect(() => {
-    console.log("shouldReload mudou:", shouldReload);
     if (shouldReload) {
       reloadReportData();
       resetReload();
@@ -73,6 +73,7 @@ export const ReportsPage = () => {
       const endpoint =
         userPlan === "Basic" ? "/transactions/basic/export" : "/transactions/premium/export";
       const response = await api.get(endpoint, { responseType: "blob" });
+      showSuccessToast("Transações importadas com sucesso!");
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement("a");
       link.href = url;
