@@ -104,12 +104,13 @@ export const CategoriesPage = () => {
   };
 
   const handleEditCategory = (category) => {
+    console.log(category);
     setNewCategory({
       name: category.name,
       color: category.color || "#000000", // Cor padrão
       keywords: Array.isArray(category.keywords) // Verifica se é um array
-        ? category.keywords.join(", ") // Converte array para string
-        : "", // Se não for array, assume vazio
+        ? category.keywords.join(",") // Converte array para string
+        : category.keywords, // Se não for array, assume é string só passar
     });
     setEditingCategory(category);
   };

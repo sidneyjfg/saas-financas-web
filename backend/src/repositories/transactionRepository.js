@@ -93,20 +93,20 @@ class TransactionRepository {
   }
   async getTotalByCategoryAndType(userId, categoryId, type) {
     if (!userId || !categoryId || !type) {
-        throw new Error("Parâmetros inválidos para obter o total por categoria e tipo.");
+      throw new Error("Parâmetros inválidos para obter o total por categoria e tipo.");
     }
 
     const result = await Transaction.findAll({
-        where: {
-            userId, // Certifique-se de filtrar pelo usuário
-            categoryId,
-            type,
-        },
-        attributes: [[Sequelize.fn('SUM', Sequelize.col('amount')), 'total']],
+      where: {
+        userId, // Certifique-se de filtrar pelo usuário
+        categoryId,
+        type,
+      },
+      attributes: [[Sequelize.fn('SUM', Sequelize.col('amount')), 'total']],
     });
 
     return result[0]?.dataValues?.total || 0;
-}
+  }
 
 
 
@@ -135,7 +135,15 @@ class TransactionRepository {
   }
   async bulkCreate(transactions) {
     return await Transaction.bulkCreate(transactions);
-}
+  }
+  async deleteAllByUser(userId) {
+    try {
+      await Transaction.destroy({ where: { userId } });
+    } catch (error) {
+      console.error("Erro ao excluir transações no repositório: ", error);
+      throw error;
+    }
+  }
 
 
 }

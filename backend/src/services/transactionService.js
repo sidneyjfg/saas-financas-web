@@ -1,6 +1,7 @@
 const transactionRepository = require('../repositories/transactionRepository');
 const categoryRepository = require('../repositories/categoryRepository');
 const goalRepository = require('../repositories/goalRepository');
+const hashFileRepository = require('../repositories/hashFileRepository');
 const { FileHashes } = require('../models');
 const fs = require('fs');
 const csv = require('csv-parser'); // Verifique se a biblioteca `csv-parser` está instalada.
@@ -138,72 +139,53 @@ class TransactionService {
 
     async importTransactionsFromCSV(filePath, userId) {
         const transactions = [];
-
-        // Busca todas as categorias do usuário (Premium)
         const categories = await categoryRepository.findAllPremiumByUser(userId);
-
-        // Verifica se a categoria "Nubank" já existe ou cria
+    
+        // Verifica ou cria categoria padrão "Nubank"
         let nubankCategory = categories.find((cat) => cat.name === "Nubank");
         if (!nubankCategory) {
             nubankCategory = await categoryRepository.create({
                 name: "Nubank",
-                color: "#8A2BE2", // Cor roxa
+                color: "#8A2BE2",
                 userId,
             });
-
-            // Atualiza a lista de categorias com a nova
             categories.push(nubankCategory);
         }
-
-        // Processar o CSV
+    
+        // Processar CSV
         await new Promise((resolve, reject) => {
             fs.createReadStream(filePath)
                 .pipe(csv())
                 .on("data", (row) => {
                     try {
-                        // Validação de campos obrigatórios
                         if (row.date && row.amount && row.title) {
-                            const titleLower = row.title.toLowerCase();
-
-                            // Encontrar a categoria com base nas palavras-chave
-                            const matchedCategory = categories.find((category) => {
-                                const keywords =
-                                    typeof category.keywords === "string"
-                                        ? category.keywords.split(",").map((k) => k.trim().toLowerCase())
-                                        : [];
-                                return keywords.some((keyword) => titleLower.includes(keyword));
-                            });
-
-                            // Determinar o tipo de transação
-                            const transactionType = titleLower === "pagamento recebido"
-                                ? "income"
-                                : "expense";
-
-                            // Adicionar a transação ao array
+                            const matchedCategory = categories.find((category) =>
+                                category.keywords.some((keyword) => row.title.toLowerCase().includes(keyword))
+                            );
+    
                             transactions.push({
                                 date: new Date(row.date),
-                                type: transactionType,
+                                type: row.type === "income" ? "income" : "expense",
                                 categoryId: matchedCategory ? matchedCategory.id : nubankCategory.id,
-                                amount: Math.abs(parseFloat(row.amount)),
+                                amount: parseFloat(row.amount),
                                 description: row.title,
                                 userId,
                             });
                         }
-                    } catch (error) {
-                        console.error("Erro ao processar linha do CSV:", row, error.message);
+                    } catch (err) {
+                        console.error("Erro ao processar linha do CSV:", row, err.message);
                     }
                 })
                 .on("end", resolve)
                 .on("error", reject);
         });
-
-        // Inserir todas as transações no banco de dados
+    
         if (transactions.length > 0) {
             await transactionRepository.bulkCreate(transactions);
         }
-
         return transactions.length;
     }
+    
 
 
 
@@ -244,10 +226,26 @@ class TransactionService {
         const existingFile = await FileHashes.findOne({ where: { hash } });
         return !!existingFile;
     }
-    async saveFileHash(hash) {
-        await FileHashes.create({ hash });
+    async saveFileHash(hash, userId) {
+        if (!userId) {
+            throw new Error("Usuário não autenticado ao salvar o hash do arquivo.");
+        }
+        return await FileHashes.create({ hash, userId });
+    }    
+    async deleteAllTransactions(userId) {
+        try {
+            // Exclui todas as transações relacionadas ao userId
+            await transactionRepository.deleteAllByUser(userId);
+    
+            // Exclui o hash associado ao userId 
+            await hashFileRepository.deleteAllByUserId(userId);
+        } catch (error) {
+            console.error("Erro no serviço ao excluir transações e hash: ", error);
+            throw error; // Relança o erro para o controlador
+        }
     }
-
+    
+    
 }
 
 module.exports = new TransactionService();

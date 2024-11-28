@@ -1,4 +1,5 @@
 const transactionService = require('../services/transactionService');
+const hashFileService = require('../services/hashFileService');
 const fs = require("fs");
 const crypto = require("crypto");
 
@@ -139,6 +140,7 @@ class TransactionController {
       await transactionService.deleteTransaction(id, userId);
       return res.status(200).json({ message: 'Transação excluída com sucesso.' });
     } catch (error) {
+      console.log("OI");
       console.error('Erro ao excluir transação:', error.message);
       return res.status(500).json({ error: 'Erro ao excluir transação.' });
     }
@@ -148,44 +150,44 @@ class TransactionController {
     const filePath = req.file.path;
 
     try {
-      console.log("Arquivo recebido com sucesso!");
-
-      // Calcula o hash do arquivo recebido
       const fileBuffer = fs.readFileSync(filePath);
       const fileHash = crypto.createHash("sha256").update(fileBuffer).digest("hex");
 
-      // Verifica se o hash do arquivo já foi processado anteriormente
       const isDuplicate = await transactionService.checkFileHash(fileHash);
       if (isDuplicate) {
-        // Remove o arquivo temporário e retorna erro
         fs.unlinkSync(filePath);
         return res.status(400).json({ error: "Este arquivo já foi importado anteriormente." });
       }
 
-      // Processa as transações do CSV
-      const totalTransactions = await transactionService.importTransactionsFromCSV(
-        filePath,
-        req.user.id // Passa o ID do usuário autenticado
-      );
+      await transactionService.saveFileHash(fileHash, req.user.id);
+      const totalTransactions = await transactionService.importTransactionsFromCSV(filePath, req.user.id);
 
-      // Salva o hash no banco de dados
-      await transactionService.saveFileHash(fileHash);
-
-      // Remove o arquivo após processar
       fs.unlinkSync(filePath);
-
-      return res.status(200).json({
-        message: `${totalTransactions} transações importadas com sucesso!`,
-      });
+      return res.status(200).json({ message: `${totalTransactions} transações importadas com sucesso!` });
     } catch (error) {
       console.error("Erro ao importar CSV:", error);
-
-      // Remove o arquivo temporário em caso de erro
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-      }
-
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
       return res.status(500).json({ error: "Erro ao importar CSV." });
+    }
+  }
+
+  // Controller de Transações
+  async deleteAllTransactions(req, res) {
+    const { id } = req.params; // Captura o ID do usuário dos parâmetros da URL
+
+    if (!id) {
+      return res.status(400).json({ error: "O ID do usuário é obrigatório." });
+    }
+
+    try {
+
+      // Exclui as transações e o hash associado
+      await transactionService.deleteAllTransactions(id);
+
+      return res.status(200).json({ message: "Transações e hash associados foram excluídos com sucesso." });
+    } catch (error) {
+      console.error("Erro ao excluir transações e hash:", error);
+      return res.status(500).json({ error: "Erro ao excluir transações e hash." });
     }
   }
 

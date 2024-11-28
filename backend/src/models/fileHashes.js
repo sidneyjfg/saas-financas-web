@@ -4,7 +4,12 @@ const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class FileHashes extends Model {
     static associate(models) {
-      // Este modelo pode ter associações no futuro, se necessário.
+      // Associa o FileHashes com o User
+      FileHashes.belongsTo(models.User, {
+        foreignKey: 'userId',
+        as: 'user',
+        onDelete: 'CASCADE', // Exclui os hashes se o usuário for excluído
+      });
     }
   }
 
@@ -14,6 +19,10 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: false,
         unique: true, // Garante que não existam hashes duplicados
+      },
+      userId: {
+        type: DataTypes.INTEGER,
+        allowNull: false, // Um hash deve estar associado a um usuário
       },
     },
     {

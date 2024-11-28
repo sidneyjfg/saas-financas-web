@@ -67,4 +67,5 @@ router.post(
   transactionController.importCSV
 );
 
+router.delete('/delete-all/:id', authenticate, planMiddleware('Premium'), transactionController.deleteAllTransactions);
 module.exports = router;

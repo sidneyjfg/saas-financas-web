@@ -7,7 +7,10 @@ import api from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
 import { useReport } from "../contexts/ReportContext";
 import { formatDate, formatCurrency } from "../utils/index"
-
+const monthNames = [
+    "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+];
 
 export const TransactionsPage = () => {
     const { userPlan } = useAuth(); // Recupera o plano do usuário
@@ -22,8 +25,16 @@ export const TransactionsPage = () => {
     });
     const [editingTransaction, setEditingTransaction] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [filters, setFilters] = useState({ type: "Todos", category: "" });
+    const [filters, setFilters] = useState({
+        type: "Todos", category: "", searchQuery: "",
+        month: "",
+        year: "",
+    });
+
     const { triggerReload } = useReport();
+
+
+
 
     const handleFileUpload = async (event) => {
         const file = event.target?.files?.[0];
@@ -55,7 +66,43 @@ export const TransactionsPage = () => {
         }
     };
 
-
+    const handleDeleteAllTransactions = async () => {
+        // Obtém o userId da primeira transação
+        const userId = transactions?.length > 0 ? transactions[0].userId : null;
+    
+        if (!userId) {
+            showWarningToast("ID do usuário não foi encontrado.");
+            return;
+        }
+    
+        try {
+            showConfirmDialog({
+                title: "Confirmar Exclusão",
+                message: "Tem certeza de que deseja excluir TODAS as transações juntamente com os arquivos importados?\nEsta ação não terá como voltar.",
+                onConfirm: async () => {
+                    try {
+                        // Envia o userId como query params na requisição DELETE
+                        console.log("Linha 87");
+                        await api.delete(`/transactions/delete-all/${userId}`);
+    
+                        // Limpa a lista de transações e reseta o hashId
+                        setTransactions([]);    
+                        showSuccessToast("Todas as transações e o hash foram excluídos com sucesso.");
+                    } catch (error) {
+                        const errorMessage =
+                            error.response?.data?.error || "Erro ao excluir todas as transações.";
+                        showErrorToast(errorMessage);
+                    }
+                },
+                onCancel: () => {
+                    showInfoToast("Ação cancelada.");
+                },
+            });
+        } catch (error) {
+            showErrorToast("Erro ao buscar hash ID.");
+        }
+    };
+    
 
     // Buscar Transações, Categorias e Metas
     useEffect(() => {
@@ -63,19 +110,15 @@ export const TransactionsPage = () => {
             try {
                 setLoading(true);
 
-                // Buscar categorias para o dropdown
                 const categoryEndpoint =
                     userPlan === "Basic" ? "/categories/basic" : "/categories/premium";
                 const categoriesResponse = await api.get(categoryEndpoint);
                 setCategories(categoriesResponse.data);
 
-                // Buscar transações
                 const transactionsResponse = await api.get("/transactions");
                 setTransactions(transactionsResponse.data);
             } catch (error) {
-                const errorMessage =
-                    error.response?.data?.error
-                showErrorToast("Erro ao carregar dados: ", errorMessage);
+                showErrorToast(error.response?.data?.error || "Erro ao carregar dados.");
             } finally {
                 setLoading(false);
             }
@@ -199,11 +242,37 @@ export const TransactionsPage = () => {
     };
 
 
+    const handleFilterChange = (field, value) => {
+        setFilters((prevFilters) => ({ ...prevFilters, [field]: value }));
+    };
     // Filtrar Transações
     const filteredTransactions = transactions.filter((transaction) => {
+        const matchesSearchQuery = filters.searchQuery
+            ? transaction.description
+                ?.toLowerCase()
+                .includes(filters.searchQuery.toLowerCase())
+            : true;
+
+        const matchesMonth = filters.month
+            ? new Date(transaction.date).getMonth() + 1 === parseInt(filters.month)
+            : true;
+
+        const matchesYear = filters.year
+            ? new Date(transaction.date).getFullYear() === parseInt(filters.year)
+            : true;
+
+        const matchesType =
+            filters.type === "Todos" || transaction.type === filters.type;
+
+        const matchesCategory =
+            !filters.category || transaction.category?.id === parseInt(filters.category);
+
         return (
-            (filters.type === "Todos" || transaction.type === filters.type) &&
-            (!filters.category || transaction.category === filters.category)
+            matchesSearchQuery &&
+            matchesMonth &&
+            matchesYear &&
+            matchesType &&
+            matchesCategory
         );
     });
 
@@ -217,30 +286,6 @@ export const TransactionsPage = () => {
                 <h1 className="text-3xl font-bold text-teal-600 text-center mb-8">
                     Gerenciamento de Transações
                 </h1>
-
-                {/* Botão de Upload */}
-                <div className="mt-4">
-                    {userPlan !== "Premium" ? (
-                        <p className="text-red-500">
-                            A importação de arquivos está disponível apenas para usuários Premium.
-                            <a href="/upgrade" className="text-teal-600 underline ml-1">
-                                Atualize agora.
-                            </a>
-                        </p>
-                    ) : (
-                        <label className="cursor-pointer">
-                            <input
-                                type="file"
-                                accept=".csv"
-                                onChange={handleFileUpload}
-                                className="hidden"
-                            />
-                            <span className="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-all cursor-pointer">
-                                Importar CSV
-                            </span>
-                        </label>
-                    )}
-                </div>
 
                 {/* Formulário de Transações */}
                 <div className="bg-white p-6 shadow-lg rounded-lg mb-10">
@@ -279,7 +324,7 @@ export const TransactionsPage = () => {
                                 setNewTransaction({ ...newTransaction, amount: e.target.value })
                             }
                         />
-                        
+
 
                         {/* Input de Data */}
                         <input
@@ -319,28 +364,95 @@ export const TransactionsPage = () => {
                     </div>
                 </div>
 
-                {/* Filtros */}
-                <div className="flex justify-between items-center mb-4">
-                    <Dropdown
-                        options={[
-                            { value: "Todos", label: "Todos" },
-                            { value: "expense", label: "Despesa" },
-                            { value: "income", label: "Receita" },
-                        ]}
-                        value={filters.type}
-                        onChange={(type) => setFilters({ ...filters, type })}
-                        placeholder="Filtrar por Tipo"
+                {/* Filtros e Barra de Pesquisa */}
+                <div className="flex justify-between items-center mb-6 gap-4 flex-wrap">
+                    {/* Barra de Pesquisa */}
+                    <input
+                        type="text"
+                        placeholder="Buscar por Descrição"
+                        className="border-gray-300 border rounded-lg p-2 flex-grow"
+                        value={filters.searchQuery}
+                        onChange={(e) => handleFilterChange("searchQuery", e.target.value)}
                     />
-                    <Dropdown
-                        options={[
-                            { value: "", label: "Todas as Categorias" },
-                            ...categories.map((cat) => ({ value: cat.id, label: cat.name })),
-                        ]}
-                        value={filters.category}
-                        onChange={(categoryId) => setFilters({ ...filters, category: categoryId })}
-                        placeholder="Filtrar por Categoria"
-                    />
+
+                    {/* Dropdowns de Filtro e Botão */}
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <Dropdown
+                            options={[
+                                { value: "", label: "Todos os Meses" },
+                                ...monthNames.map((name, index) => ({
+                                    value: index + 1,
+                                    label: name,
+                                })),
+                            ]}
+                            value={filters.month}
+                            onChange={(value) => handleFilterChange("month", value)}
+                            placeholder="Filtrar por Mês"
+                        />
+                        <Dropdown
+                            options={[
+                                { value: "", label: "Todos os Anos" },
+                                ...Array.from(
+                                    new Set(
+                                        transactions.map((t) => new Date(t.date).getFullYear())
+                                    )
+                                ).map((year) => ({
+                                    value: year,
+                                    label: year,
+                                })),
+                            ]}
+                            value={filters.year}
+                            onChange={(value) => handleFilterChange("year", value)}
+                            placeholder="Filtrar por Ano"
+                        />
+                        <Dropdown
+                            options={[
+                                { value: "Todos", label: "Todos os Tipos" },
+                                { value: "expense", label: "Despesa" },
+                                { value: "income", label: "Receita" },
+                            ]}
+                            value={filters.type}
+                            onChange={(value) => handleFilterChange("type", value)}
+                            placeholder="Filtrar por Tipo"
+                        />
+                        <Dropdown
+                            options={[
+                                { value: "", label: "Todas as Categorias" },
+                                ...categories.map((cat) => ({
+                                    value: cat.id,
+                                    label: cat.name,
+                                })),
+                            ]}
+                            value={filters.category}
+                            onChange={(value) => handleFilterChange("category", value)}
+                            placeholder="Filtrar por Categoria"
+                        />
+
+                        {/* Botão de Importar CSV */}
+                        {userPlan === "Premium" && (
+                            <label className="cursor-pointer">
+                                <input
+                                    type="file"
+                                    accept=".csv"
+                                    onChange={handleFileUpload}
+                                    className="hidden"
+                                />
+                                <span className="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-all cursor-pointer">
+                                    Importar CSV
+                                </span>
+                            </label>
+                        )}
+
+                        {/* Botão de Excluir Tudo */}
+                        <button
+                            onClick={handleDeleteAllTransactions}
+                            className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-all"
+                        >
+                            Excluir Tudo
+                        </button>
+                    </div>
                 </div>
+
 
                 {/* Tabela de Transações */}
                 <div className="flex justify-center items-center bg-white shadow-lg rounded-lg overflow-hidden">
