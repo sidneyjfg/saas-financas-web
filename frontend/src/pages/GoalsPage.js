@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { showSuccessToast, showErrorToast } from "../utils/toast";
 import api from '../services/api';
 import { useAuth } from "../contexts/AuthContext";
-import { formatDate, formatCurrency } from "../utils/index"
+import { formatDate, formatCurrency } from "../utils/index";
+import Dropdown from "../components/Dropdown"; // Supondo que o componente Dropdown esteja nessa pasta
 
 export const GoalsPage = () => {
   const [goals, setGoals] = useState([]);
@@ -81,8 +82,6 @@ export const GoalsPage = () => {
     }
   };
 
-
-
   const handleDeleteGoal = async (id) => {
     if (window.confirm('Tem certeza que deseja excluir esta meta?')) {
       try {
@@ -99,7 +98,6 @@ export const GoalsPage = () => {
   };
 
   const handleEditGoal = (goal) => {
-    console.log(goal.deadline);
     setNewGoal({
       name: goal.name,
       targetAmount: goal.targetAmount,
@@ -108,6 +106,7 @@ export const GoalsPage = () => {
     });
     setEditingGoalId(goal.id); // Define a meta que está sendo editada
   };
+
   const handleCancelEdit = () => {
     setNewGoal({ name: '', targetAmount: '', deadline: '', categoryId: '' });
     setEditingGoalId(null); // Sai do modo de edição
@@ -143,20 +142,17 @@ export const GoalsPage = () => {
             value={newGoal.deadline}
             onChange={(e) => setNewGoal({ ...newGoal, deadline: e.target.value })}
           />
-          <select
-            className="border rounded-lg p-2 w-full mb-4"
+          <Dropdown
+            options={[
+              { value: '', label: 'Criar nova categoria automaticamente' },
+              ...categories.map((cat) => ({ value: cat.id, label: cat.name })),
+            ]}
             value={newGoal.categoryId}
-            onChange={(e) => setNewGoal({ ...newGoal, categoryId: e.target.value })}
-          >
-            <option value="">Criar nova categoria automaticamente</option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
-          </select>
+            onChange={(categoryId) => setNewGoal({ ...newGoal, categoryId })}
+            placeholder="Selecione uma Categoria"
+          />
 
-          <div className="flex justify-between">
+          <div className="flex justify-between mt-4">
             <button
               className="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-all"
               onClick={handleSaveGoal}
@@ -173,6 +169,7 @@ export const GoalsPage = () => {
             )}
           </div>
         </div>
+
         {/* Lista de Metas */}
         {loading ? (
           <p className="text-center text-gray-500">Carregando...</p>

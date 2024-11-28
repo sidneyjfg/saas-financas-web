@@ -9,11 +9,11 @@ const CATEGORY_LIMITS = {
 };
 
 export const CategoriesPage = () => {
-  const { userPlan } = useAuth(); // Recupera o plano do usuário
+  const { userPlan } = useAuth();
   const [categories, setCategories] = useState([]);
   const [newCategory, setNewCategory] = useState({
     name: "",
-    color: "",
+    color: "#000000", // Cor padrão válida
     keywords: "",
   });
   const [editingCategory, setEditingCategory] = useState(null);
@@ -29,12 +29,11 @@ export const CategoriesPage = () => {
           userPlan === "Basic" ? "/categories/basic" : "/categories/premium";
         const response = await api.get(endpoint);
         showInfoToast("Categorias carregadas");
-  
-        // Atualiza o estado das categorias
+
         setCategories(
           response.data.map((category) => ({
             ...category,
-            keywords: category.keywords ? category.keywords.join(", ") : "", // Certifique-se de que 'keywords' está sendo tratado
+            keywords: category.keywords ? category.keywords.join(", ") : "",
           }))
         );
       } catch (error) {
@@ -43,10 +42,9 @@ export const CategoriesPage = () => {
         setLoading(false);
       }
     };
-  
+
     fetchCategories();
   }, [userPlan]);
-  
 
   // Create or Update Category
   const handleSaveCategory = async () => {
@@ -55,26 +53,32 @@ export const CategoriesPage = () => {
       return;
     }
 
-    if (!newCategory.keywords.trim()) {
-      showWarningToast("Adicione ao menos uma palavra-chave.");
-      return;
-    }
+    // Garante que keywords será um array vazio se o campo estiver vazio
+    const keywordsArray = newCategory.keywords
+      ? newCategory.keywords
+        .split(",")
+        .map((keyword) => keyword.trim())
+        .filter((keyword) => keyword) // Remove strings vazias
+      : [];
 
-    // Definir cor padrão como preta (#000000) caso não seja fornecida
     const categoryData = {
       ...newCategory,
-      color: newCategory.color || "#000000", // Cor padrão
-      keywords: newCategory.keywords.split(",").map((keyword) => keyword.trim()), // Converte para array
+      color: newCategory.color || "#000000", // Define cor padrão
+      keywords: newCategory.keywords.split(",").map((keyword) => keyword.trim()), // Converte string para array
     };
+
 
     try {
       if (editingCategory) {
         // Atualizar categoria existente
+        const existingKeywords = editingCategory.keywords || [];
+        categoryData.keywords = [...new Set([...existingKeywords, ...keywordsArray])]; // Concatena e remove duplicatas
+
         await api.put(`/categories/${editingCategory.id}`, categoryData);
+        console.log(categoryData);
         showSuccessToast("Categoria atualizada com sucesso!");
       } else {
         // Criar nova categoria
-        console.log("Criando categoria:", categoryData);
         await api.post("/categories", categoryData);
         showSuccessToast("Categoria criada com sucesso!");
       }
@@ -86,24 +90,26 @@ export const CategoriesPage = () => {
       setCategories(
         response.data.map((category) => ({
           ...category,
-          keywords: category.keywords ? category.keywords.join(", ") : "", // Converte array para string
+          keywords: category.keywords ? category.keywords.join(", ") : "",
         }))
       );
 
       // Resetar o formulário
-      setNewCategory({ name: "", color: "", keywords: "" });
+      setNewCategory({ name: "", color: "#000000", keywords: "" });
       setEditingCategory(null);
     } catch (error) {
       console.error("Erro ao salvar categoria:", error);
+      showErrorToast("Erro ao salvar categoria.");
     }
   };
 
-  // Edit Category
   const handleEditCategory = (category) => {
     setNewCategory({
       name: category.name,
-      color: category.color,
-      keywords: category.keywords, // Já está formatado como string
+      color: category.color || "#000000", // Cor padrão
+      keywords: Array.isArray(category.keywords) // Verifica se é um array
+        ? category.keywords.join(", ") // Converte array para string
+        : "", // Se não for array, assume vazio
     });
     setEditingCategory(category);
   };
@@ -115,7 +121,7 @@ export const CategoriesPage = () => {
       showSuccessToast("Categoria removida com sucesso!");
       setCategories(categories.filter((category) => category.id !== id));
     } catch (error) {
-      showErrorToast("Erro ao excluir categoria:", error);
+      showErrorToast("Erro ao excluir categoria.");
     }
   };
 
@@ -188,7 +194,7 @@ export const CategoriesPage = () => {
                   <div className="flex items-center gap-4">
                     <div
                       className="w-6 h-6 rounded-full"
-                      style={{ backgroundColor: category.color }}
+                      style={{ backgroundColor: category.color || "#000000" }}
                     ></div>
                     <span className="text-gray-700 font-bold">
                       {category.name}

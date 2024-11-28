@@ -9,11 +9,9 @@ export const AuthProvider = ({ children }) => {
 
   const signIn = async (email, password) => {
     try {
-      console.log("Sending login request to backend... | ", email,password);
       const response = await api.post("/users/login", { email, password }); // Chama o backend
       const { token, plan } = response.data; // Extrai token e plano da resposta
 
-      console.log("Login successful, saving to context:", { token, plan });
       setIsAuthenticated(true);
       setUserPlan(plan);
       localStorage.setItem("token", token); // Salva no localStorage

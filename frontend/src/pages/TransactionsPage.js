@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { showErrorToast, showInfoToast, showSuccessToast, showWarningToast } from "../utils/toast";
 import { showConfirmDialog } from "../utils/confirmDialog";
+import Dropdown from "../components/Dropdown"; // Importa o componente genérico
 import { FiRefreshCcw } from "react-icons/fi"; // Biblioteca react-icons
 import api from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
@@ -126,8 +127,8 @@ export const TransactionsPage = () => {
             setEditingTransaction(null);
         } catch (error) {
             const errorMessage =
-                    error.response?.data?.error
-            showErrorToast("Erro ao salvar transação. Verifique os dados e tente novamente.\n",errorMessage);
+                error.response?.data?.error
+            showErrorToast("Erro ao salvar transação. Verifique os dados e tente novamente.\n", errorMessage);
         }
     };
 
@@ -136,7 +137,7 @@ export const TransactionsPage = () => {
     const handleUpdateCategories = async () => {
         try {
             await api.put("/transactions/update-categories");
-            
+
             // Dispara o reload para o contexto
             // Atualizar a lista de transações após a atualização
             const transactionsResponse = await api.get("/transactions");
@@ -153,9 +154,9 @@ export const TransactionsPage = () => {
     // Editar Transação
     const handleEditTransaction = (transaction) => {
         setNewTransaction({
-            date: transaction.date,
+            date: formatDate(transaction.date),
             type: transaction.type,
-            category: transaction.category,
+            category: transaction.category?.id || transaction.categoryId, // Usa o ID da categoria
             amount: transaction.amount,
             description: transaction.description,
         });
@@ -165,25 +166,38 @@ export const TransactionsPage = () => {
     // Remover Transação
     const handleDeleteTransaction = (id) => {
         showConfirmDialog({
-          title: "Confirmar Exclusão",
-          message: "Tem certeza que deseja excluir esta transação?",
-          onConfirm: async () => {
-            try {
-              await api.delete(`/transactions/${id}`);
-              setTransactions((prevTransactions) =>
-                prevTransactions.filter((transaction) => transaction.id !== id)
-              );
-              showSuccessToast("Transação removida com sucesso.");
-            } catch (error) {
-              const errorMessage = error.response?.data?.error || "Erro desconhecido.";
-              showErrorToast(`Erro ao excluir transação: ${errorMessage}`);
-            }
-          },
-          onCancel: () => {
-            showInfoToast("Ação cancelada."); // Opcional
-          },
+            title: "Confirmar Exclusão",
+            message: "Tem certeza que deseja excluir esta transação?",
+            onConfirm: async () => {
+                try {
+                    await api.delete(`/transactions/${id}`);
+                    setTransactions((prevTransactions) =>
+                        prevTransactions.filter((transaction) => transaction.id !== id)
+                    );
+                    showSuccessToast("Transação removida com sucesso.");
+                } catch (error) {
+                    const errorMessage = error.response?.data?.error || "Erro desconhecido.";
+                    showErrorToast(`Erro ao excluir transação: ${errorMessage}`);
+                }
+            },
+            onCancel: () => {
+                showInfoToast("Ação cancelada."); // Opcional
+            },
         });
-      };
+    };
+
+    const handleCancelEdit = () => {
+        setNewTransaction({
+            date: "",
+            type: "expense",
+            category: "",
+            amount: "",
+            description: "",
+        });
+        setEditingTransaction(null);
+        showInfoToast("Edição cancelada.");
+    };
+
 
     // Filtrar Transações
     const filteredTransactions = transactions.filter((transaction) => {
@@ -209,10 +223,7 @@ export const TransactionsPage = () => {
                     {userPlan !== "Premium" ? (
                         <p className="text-red-500">
                             A importação de arquivos está disponível apenas para usuários Premium.
-                            <a
-                                href="/upgrade"
-                                className="text-teal-600 underline ml-1"
-                            >
+                            <a href="/upgrade" className="text-teal-600 underline ml-1">
                                 Atualize agora.
                             </a>
                         </p>
@@ -231,45 +242,53 @@ export const TransactionsPage = () => {
                     )}
                 </div>
 
-
                 {/* Formulário de Transações */}
                 <div className="bg-white p-6 shadow-lg rounded-lg mb-10">
                     <h2 className="text-xl font-bold text-gray-700 mb-4">
                         {editingTransaction ? "Editar Transação" : "Nova Transação"}
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <input
-                            type="date"
-                            className="border-gray-300 border rounded-lg p-2"
-                            value={newTransaction.date}
-                            onChange={(e) => setNewTransaction({ ...newTransaction, date: e.target.value })}
-                        />
-                        <select
-                            className="border-gray-300 border rounded-lg p-2"
+                        {/* Dropdown de Tipo */}
+                        <Dropdown
+                            options={[
+                                { value: "expense", label: "Despesa" },
+                                { value: "income", label: "Receita" },
+                            ]}
                             value={newTransaction.type}
-                            onChange={(e) => setNewTransaction({ ...newTransaction, type: e.target.value })}
-                        >
-                            <option value="expense">Despesa</option>
-                            <option value="income">Receita</option>
-                        </select>
-                        <select
-                            className="border-gray-300 border rounded-lg p-2"
+                            onChange={(type) => setNewTransaction({ ...newTransaction, type })}
+                            placeholder="Selecione o Tipo"
+                        />
+
+                        {/* Dropdown de Categorias */}
+                        <Dropdown
+                            options={categories.map((cat) => ({ value: cat.id, label: cat.name }))}
                             value={newTransaction.category}
-                            onChange={(e) => setNewTransaction({ ...newTransaction, category: e.target.value })}
-                        >
-                            <option value="">Selecione uma Categoria</option>
-                            {categories.map((category) => (
-                                <option key={category.id} value={category.id}>
-                                    {category.name}
-                                </option>
-                            ))}
-                        </select>
+                            onChange={(categoryId) =>
+                                setNewTransaction({ ...newTransaction, category: categoryId })
+                            }
+                            placeholder="Selecione uma Categoria"
+                        />
+
+                        {/* Input de Valor */}
                         <input
                             type="number"
                             className="border-gray-300 border rounded-lg p-2"
                             placeholder="Valor"
                             value={newTransaction.amount}
-                            onChange={(e) => setNewTransaction({ ...newTransaction, amount: e.target.value })}
+                            onChange={(e) =>
+                                setNewTransaction({ ...newTransaction, amount: e.target.value })
+                            }
+                        />
+                        
+
+                        {/* Input de Data */}
+                        <input
+                            type="date"
+                            className="border-gray-300 border rounded-lg p-2"
+                            value={newTransaction.date}
+                            onChange={(e) =>
+                                setNewTransaction({ ...newTransaction, date: e.target.value })
+                            }
                         />
                         <textarea
                             className="border-gray-300 border rounded-lg p-2"
@@ -280,46 +299,60 @@ export const TransactionsPage = () => {
                             }
                         />
                     </div>
-                    <button
-                        onClick={handleSaveTransaction}
-                        className="mt-4 px-4 py-2 bg-teal-600 text-white font-bold rounded-lg shadow-md hover:bg-teal-700 transition-all duration-300"
-                    >
-                        {editingTransaction ? "Atualizar" : "Adicionar"}
-                    </button>
+
+                    {/* Botões de Ações */}
+                    <div className="flex gap-4 mt-4">
+                        <button
+                            onClick={handleSaveTransaction}
+                            className="px-4 py-2 bg-teal-600 text-white font-bold rounded-lg shadow-md hover:bg-teal-700 transition-all duration-300"
+                        >
+                            {editingTransaction ? "Atualizar" : "Adicionar"}
+                        </button>
+                        {editingTransaction && (
+                            <button
+                                onClick={handleCancelEdit}
+                                className="px-4 py-2 bg-gray-400 text-white font-bold rounded-lg shadow-md hover:bg-gray-500 transition-all duration-300"
+                            >
+                                Cancelar
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 {/* Filtros */}
                 <div className="flex justify-between items-center mb-4">
-                    <select
-                        className="border-gray-300 border rounded-lg p-2"
+                    <Dropdown
+                        options={[
+                            { value: "Todos", label: "Todos" },
+                            { value: "expense", label: "Despesa" },
+                            { value: "income", label: "Receita" },
+                        ]}
                         value={filters.type}
-                        onChange={(e) => setFilters({ ...filters, type: e.target.value })}
-                    >
-                        <option value="Todos">Todos</option>
-                        <option value="expense">Despesa</option>
-                        <option value="income">Receita</option>
-                    </select>
-                    <select
-                        className="border-gray-300 border rounded-lg p-2"
+                        onChange={(type) => setFilters({ ...filters, type })}
+                        placeholder="Filtrar por Tipo"
+                    />
+                    <Dropdown
+                        options={[
+                            { value: "", label: "Todas as Categorias" },
+                            ...categories.map((cat) => ({ value: cat.id, label: cat.name })),
+                        ]}
                         value={filters.category}
-                        onChange={(e) => setFilters({ ...filters, category: e.target.value })}
-                    >
-                        <option value="">Todas as Categorias</option>
-                        {categories.map((category) => (
-                            <option key={category.id} value={category.name}>
-                                {category.name}
-                            </option>
-                        ))}
-                    </select>
+                        onChange={(categoryId) => setFilters({ ...filters, category: categoryId })}
+                        placeholder="Filtrar por Categoria"
+                    />
                 </div>
-                {/* Tabela de Transações */}
+
                 {/* Tabela de Transações */}
                 <div className="flex justify-center items-center bg-white shadow-lg rounded-lg overflow-hidden">
                     <table className="table-auto w-full border-collapse">
                         <thead>
                             <tr className="bg-teal-600 text-white">
-                                <th className="py-4 px-6 text-left text-sm font-bold uppercase tracking-wider">Data</th>
-                                <th className="py-4 px-6 text-left text-sm font-bold uppercase tracking-wider">Tipo</th>
+                                <th className="py-4 px-6 text-left text-sm font-bold uppercase tracking-wider">
+                                    Data
+                                </th>
+                                <th className="py-4 px-6 text-left text-sm font-bold uppercase tracking-wider">
+                                    Tipo
+                                </th>
                                 <th className="py-4 px-6 text-left text-sm font-bold uppercase tracking-wider">
                                     Categoria
                                     <button
@@ -330,9 +363,15 @@ export const TransactionsPage = () => {
                                         <FiRefreshCcw />
                                     </button>
                                 </th>
-                                <th className="py-4 px-6 text-left text-sm font-bold uppercase tracking-wider">Valor</th>
-                                <th className="py-4 px-6 text-left text-sm font-bold uppercase tracking-wider">Descrição</th>
-                                <th className="py-4 px-6 text-left text-sm font-bold uppercase tracking-wider">Ações</th>
+                                <th className="py-4 px-6 text-left text-sm font-bold uppercase tracking-wider">
+                                    Valor
+                                </th>
+                                <th className="py-4 px-6 text-left text-sm font-bold uppercase tracking-wider">
+                                    Descrição
+                                </th>
+                                <th className="py-4 px-6 text-left text-sm font-bold uppercase tracking-wider">
+                                    Ações
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
@@ -345,9 +384,7 @@ export const TransactionsPage = () => {
                                     <td className="py-4 px-6 text-gray-700 text-sm">
                                         {formatDate(transaction.date)}
                                     </td>
-                                    <td className="py-4 px-6 text-gray-700 text-sm">
-                                        {transaction.type}
-                                    </td>
+                                    <td className="py-4 px-6 text-gray-700 text-sm">{transaction.type}</td>
                                     <td className="py-4 px-6 text-gray-700 text-sm">
                                         {transaction.category?.name || "Sem Categoria"}
                                     </td>

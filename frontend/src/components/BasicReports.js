@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Bar } from "react-chartjs-2";
+import Dropdown from "../components/Dropdown"; // Supondo que o componente esteja nessa pasta
 
 // Map para exibir os meses como nomes legíveis
 const monthNames = [
@@ -11,8 +12,7 @@ const BasicReports = ({ data, goalsData }) => {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedMonth, setSelectedMonth] = useState("");
   const [summary, setSummary] = useState({ totalIncome: 0, totalExpense: 0, totalGoal: 0 });
-  console.log(goalsData);
-  // Filtrar dados com base nos filtros aplicados
+
   const filteredData = React.useMemo(() => {
     return data.filter((item) => {
       const matchesCategory = selectedCategory ? item.categoryName === selectedCategory : true;
@@ -45,12 +45,8 @@ const BasicReports = ({ data, goalsData }) => {
     });
   }, [filteredData, goalsData]);
 
-
-
   const categories = [...new Set(data.map((item) => item.categoryName))];
-  const months = [...new Set(
-    data.map((item) => `${item.year}-${item.month}`)
-  )].map((month) => ({
+  const months = [...new Set(data.map((item) => `${item.year}-${item.month}`))].map((month) => ({
     raw: month,
     formatted: `${monthNames[parseInt(month.split("-")[1], 10) - 1]}/${month.split("-")[0]}`,
   }));
@@ -82,7 +78,6 @@ const BasicReports = ({ data, goalsData }) => {
 
   const options = {
     responsive: true,
-    animation: true, // Desabilita animações
     plugins: {
       legend: { position: "top" },
       tooltip: {
@@ -114,51 +109,31 @@ const BasicReports = ({ data, goalsData }) => {
             {`$${summary.totalGoal.toFixed(2)}`}
           </p>
         </div>
-
-
       </div>
 
       {/* Filtros */}
       <div className="grid grid-cols-2 gap-4 mb-4">
         {/* Filtro de Categorias */}
-        <div>
-          <label htmlFor="categoryFilter" className="block text-gray-700 font-medium mb-2">
-            Filter by Category
-          </label>
-          <select
-            id="categoryFilter"
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            className="border border-gray-300 px-4 py-2 rounded w-full"
-          >
-            <option value="">All Categories</option>
-            {categories.map((category) => (
-              <option key={category} value={category}>
-                {category}
-              </option>
-            ))}
-          </select>
-        </div>
+        <Dropdown
+          options={[
+            { value: "", label: "All Categories" },
+            ...categories.map((cat) => ({ value: cat, label: cat })),
+          ]}
+          value={selectedCategory}
+          onChange={(value) => setSelectedCategory(value)}
+          placeholder="Filter by Category"
+        />
 
         {/* Filtro de Mês */}
-        <div>
-          <label htmlFor="monthFilter" className="block text-gray-700 font-medium mb-2">
-            Filter by Month
-          </label>
-          <select
-            id="monthFilter"
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(e.target.value)}
-            className="border border-gray-300 px-4 py-2 rounded w-full"
-          >
-            <option value="">All Months</option>
-            {months.map((month) => (
-              <option key={month.raw} value={month.raw}>
-                {month.formatted}
-              </option>
-            ))}
-          </select>
-        </div>
+        <Dropdown
+          options={[
+            { value: "", label: "All Months" },
+            ...months.map((month) => ({ value: month.raw, label: month.formatted })),
+          ]}
+          value={selectedMonth}
+          onChange={(value) => setSelectedMonth(value)}
+          placeholder="Filter by Month"
+        />
       </div>
 
       {/* Gráfico */}

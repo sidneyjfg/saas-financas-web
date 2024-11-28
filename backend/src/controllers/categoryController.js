@@ -73,12 +73,16 @@ class CategoryController {
 
     try {
       // Verificar o tipo de `keywords` e converter para array se for string
+      console.log("Minhas keywords",keywords);
       const keywordsArray = Array.isArray(keywords)
         ? keywords // Já é um array
         : keywords
           ? keywords.split(',').map((kw) => kw.trim()) // Converte de string para array
           : [];
 
+      if (!Array.isArray(keywordsArray)) {
+        throw new Error("O campo 'keywords' deve ser um array ou uma string separada por vírgulas.");
+      }
       const category = await categoryService.updateCategory(id, {
         name,
         color,

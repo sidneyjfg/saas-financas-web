@@ -40,25 +40,31 @@ class CategoryRepository {
   }
 
 
-  // Atualizar uma categoria existente
   async update(id, categoryData) {
-    try {
-      // Atualizar a categoria no banco
-      return await Category.update(
+    try {  
+      const [updated] = await Category.update(
         {
           name: categoryData.name,
           color: categoryData.color,
-          keywords: JSON.stringify(categoryData.keywords), // Armazenar como JSON
+          keywords: categoryData.keywords, // Passe diretamente o array
         },
         {
           where: { id, userId: categoryData.userId },
+          silent: true, // Garante que o Sequelize force o UPDATE
         }
       );
+  
+      if (updated) {
+        const updatedCategory = await Category.findOne({ where: { id, userId: categoryData.userId } });
+        return updatedCategory;
+      }
+  
+      throw new Error("Categoria não encontrada ou não atualizada.");
     } catch (error) {
       console.error("Error in update repository:", error.message);
       throw error;
     }
-  }
+  }  
 
   async countByUser(userId) {
     return await Category.count({
