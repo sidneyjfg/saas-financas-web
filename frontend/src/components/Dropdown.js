@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-const Dropdown = ({ options, value, onChange, placeholder = "Selecione", className = "" }) => {
+export const Dropdown = ({ options, value, onChange, placeholder = "Selecione", className = "" }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const handleSelect = (selectedValue) => {
@@ -50,5 +50,3 @@ const Dropdown = ({ options, value, onChange, placeholder = "Selecione", classNa
     </div>
   );
 };
-
-export default Dropdown;

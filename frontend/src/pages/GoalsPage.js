@@ -3,7 +3,7 @@ import { showSuccessToast, showErrorToast } from "../utils/toast";
 import api from '../services/api';
 import { useAuth } from "../contexts/AuthContext";
 import { formatDate, formatCurrency } from "../utils/index";
-import Dropdown from "../components/Dropdown"; // Supondo que o componente Dropdown esteja nessa pasta
+import { Dropdown } from "../components/Dropdown"; // Supondo que o componente Dropdown esteja nessa pasta
 
 export const GoalsPage = () => {
   const [goals, setGoals] = useState([]);

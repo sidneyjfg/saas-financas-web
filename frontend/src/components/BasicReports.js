@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Bar } from "react-chartjs-2";
-import Dropdown from "../components/Dropdown"; // Supondo que o componente esteja nessa pasta
+import { Dropdown } from "../components/Dropdown"; // Supondo que o componente esteja nessa pasta
 
 // Map para exibir os meses como nomes legíveis
 const monthNames = [

@@ -1,13 +1,11 @@
-'use strict';
-
 module.exports = {
-  async up(queryInterface, Sequelize) {
+  up: async (queryInterface, Sequelize) => {
     await queryInterface.createTable('teams', {
       id: {
-        type: Sequelize.INTEGER,
+        allowNull: false,
         autoIncrement: true,
         primaryKey: true,
-        allowNull: false,
+        type: Sequelize.INTEGER,
       },
       name: {
         type: Sequelize.STRING,
@@ -15,25 +13,25 @@ module.exports = {
       },
       ownerId: {
         type: Sequelize.INTEGER,
+        allowNull: false,
         references: {
           model: 'users',
           key: 'id',
         },
-        onUpdate: 'CASCADE',
         onDelete: 'CASCADE',
       },
       createdAt: {
-        type: Sequelize.DATE,
         allowNull: false,
+        type: Sequelize.DATE,
       },
       updatedAt: {
-        type: Sequelize.DATE,
         allowNull: false,
+        type: Sequelize.DATE,
       },
     });
   },
 
-  async down(queryInterface, Sequelize) {
+  down: async (queryInterface, Sequelize) => {
     await queryInterface.dropTable('teams');
   },
 };

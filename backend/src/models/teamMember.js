@@ -3,10 +3,6 @@ const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
   class TeamMember extends Model {
-    /**
-     * Helper method for defining associations.
-     * This method is not a part of Sequelize lifecycle.
-     */
     static associate(models) {
       // Um membro pertence a um time
       TeamMember.belongsTo(models.Team, { foreignKey: 'teamId', as: 'team' });
@@ -35,14 +31,26 @@ module.exports = (sequelize, DataTypes) => {
         },
       },
       role: {
-        type: DataTypes.ENUM('owner', 'member'),
+        type: DataTypes.ENUM('owner', 'admin', 'member'),
         allowNull: false,
+        validate: {
+          isIn: {
+            args: [['owner', 'admin', 'member']],
+            msg: "O papel deve ser 'owner', 'admin' ou 'member'.",
+          },
+        },
       },
     },
     {
       sequelize,
       modelName: 'TeamMember',
-      tableName: 'teamMembers', // Define explicitamente o nome da tabela
+      tableName: 'teamMembers',
+      indexes: [
+        {
+          unique: true,
+          fields: ['teamId', 'userId'],
+        },
+      ],
     }
   );
 

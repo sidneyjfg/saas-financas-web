@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useReport } from "../contexts/ReportContext";
 import { Bar, Pie } from "react-chartjs-2";
-import Dropdown from "../components/Dropdown";
+import { Dropdown } from "../components/Dropdown";
 import api from "../services/api";
 import {
   Chart as ChartJS,

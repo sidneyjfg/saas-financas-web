@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { showErrorToast, showInfoToast, showSuccessToast, showWarningToast } from "../utils/toast";
 import { showConfirmDialog } from "../utils/confirmDialog";
-import Dropdown from "../components/Dropdown"; // Importa o componente genérico
+import { Dropdown } from "../components/Dropdown"; // Importa o componente genérico
 import { FiRefreshCcw } from "react-icons/fi"; // Biblioteca react-icons
 import api from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
@@ -69,12 +69,12 @@ export const TransactionsPage = () => {
     const handleDeleteAllTransactions = async () => {
         // Obtém o userId da primeira transação
         const userId = transactions?.length > 0 ? transactions[0].userId : null;
-    
+
         if (!userId) {
             showWarningToast("ID do usuário não foi encontrado.");
             return;
         }
-    
+
         try {
             showConfirmDialog({
                 title: "Confirmar Exclusão",
@@ -84,9 +84,9 @@ export const TransactionsPage = () => {
                         // Envia o userId como query params na requisição DELETE
                         console.log("Linha 87");
                         await api.delete(`/transactions/delete-all/${userId}`);
-    
+
                         // Limpa a lista de transações e reseta o hashId
-                        setTransactions([]);    
+                        setTransactions([]);
                         showSuccessToast("Todas as transações e o hash foram excluídos com sucesso.");
                     } catch (error) {
                         const errorMessage =
@@ -102,7 +102,7 @@ export const TransactionsPage = () => {
             showErrorToast("Erro ao buscar hash ID.");
         }
     };
-    
+
 
     // Buscar Transações, Categorias e Metas
     useEffect(() => {

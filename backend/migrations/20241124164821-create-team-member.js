@@ -1,48 +1,51 @@
-'use strict';
-
 module.exports = {
-  async up(queryInterface, Sequelize) {
+  up: async (queryInterface, Sequelize) => {
     await queryInterface.createTable('teamMembers', {
       id: {
-        type: Sequelize.INTEGER,
+        allowNull: false,
         autoIncrement: true,
         primaryKey: true,
-        allowNull: false,
+        type: Sequelize.INTEGER,
       },
       teamId: {
         type: Sequelize.INTEGER,
+        allowNull: false,
         references: {
           model: 'teams',
           key: 'id',
         },
-        onUpdate: 'CASCADE',
         onDelete: 'CASCADE',
       },
       userId: {
         type: Sequelize.INTEGER,
+        allowNull: false,
         references: {
           model: 'users',
           key: 'id',
         },
-        onUpdate: 'CASCADE',
         onDelete: 'CASCADE',
       },
       role: {
-        type: Sequelize.ENUM('owner', 'member'),
+        type: Sequelize.ENUM('owner', 'admin', 'member'),
         allowNull: false,
       },
       createdAt: {
-        type: Sequelize.DATE,
         allowNull: false,
+        type: Sequelize.DATE,
       },
       updatedAt: {
-        type: Sequelize.DATE,
         allowNull: false,
+        type: Sequelize.DATE,
       },
+    });
+
+    // Adiciona índice único para evitar duplicidade
+    await queryInterface.addIndex('teamMembers', ['teamId', 'userId'], {
+      unique: true,
     });
   },
 
-  async down(queryInterface, Sequelize) {
+  down: async (queryInterface, Sequelize) => {
     await queryInterface.dropTable('teamMembers');
   },
 };

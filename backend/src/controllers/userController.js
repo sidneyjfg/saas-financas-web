@@ -43,6 +43,18 @@ class UserController {
     }
   }
   
+  async getCurrentUser (req, res) {
+    const user = req.user; // O middleware 'authenticate' adiciona o usuário à requisição
+    if (user) {
+      res.status(200).json({
+        email: user.email,
+        role: user.role,
+        name: user.name,
+      });
+    } else {
+      res.status(401).json({ error: "Usuário não autenticado" });
+    }
+  };
 }
 
 module.exports = new UserController();
