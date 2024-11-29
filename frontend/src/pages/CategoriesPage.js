@@ -52,37 +52,32 @@ export const CategoriesPage = () => {
       showWarningToast("O nome da categoria é obrigatório.");
       return;
     }
-
-    // Garante que keywords será um array vazio se o campo estiver vazio
+  
+    // Garante que keywords será um array válido
     const keywordsArray = newCategory.keywords
       ? newCategory.keywords
-        .split(",")
-        .map((keyword) => keyword.trim())
-        .filter((keyword) => keyword) // Remove strings vazias
+          .split(",")
+          .map((keyword) => keyword.trim())
+          .filter((keyword) => keyword) // Remove strings vazias
       : [];
-
+  
     const categoryData = {
-      ...newCategory,
+      name: newCategory.name,
       color: newCategory.color || "#000000", // Define cor padrão
-      keywords: newCategory.keywords.split(",").map((keyword) => keyword.trim()), // Converte string para array
+      keywords: keywordsArray, // Envia o array de keywords diretamente
     };
-
-
+  
     try {
       if (editingCategory) {
         // Atualizar categoria existente
-        const existingKeywords = editingCategory.keywords || [];
-        categoryData.keywords = [...new Set([...existingKeywords, ...keywordsArray])]; // Concatena e remove duplicatas
-
         await api.put(`/categories/${editingCategory.id}`, categoryData);
-        console.log(categoryData);
         showSuccessToast("Categoria atualizada com sucesso!");
       } else {
         // Criar nova categoria
         await api.post("/categories", categoryData);
         showSuccessToast("Categoria criada com sucesso!");
       }
-
+  
       // Atualizar lista de categorias
       const endpoint =
         userPlan === "Basic" ? "/categories/basic" : "/categories/premium";
@@ -93,7 +88,7 @@ export const CategoriesPage = () => {
           keywords: category.keywords ? category.keywords.join(", ") : "",
         }))
       );
-
+  
       // Resetar o formulário
       setNewCategory({ name: "", color: "#000000", keywords: "" });
       setEditingCategory(null);
@@ -102,6 +97,7 @@ export const CategoriesPage = () => {
       showErrorToast("Erro ao salvar categoria.");
     }
   };
+  
 
   const handleEditCategory = (category) => {
     console.log(category);

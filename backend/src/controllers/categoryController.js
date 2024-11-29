@@ -70,32 +70,35 @@ class CategoryController {
     const userId = req.user.id;
     const { id } = req.params;
     const { name, color, keywords } = req.body;
-
+  
     try {
-      // Verificar o tipo de `keywords` e converter para array se for string
-      console.log("Minhas keywords",keywords);
+      // Converter para array e remover duplicatas
       const keywordsArray = Array.isArray(keywords)
-        ? keywords // Já é um array
+        ? keywords
         : keywords
-          ? keywords.split(',').map((kw) => kw.trim()) // Converte de string para array
-          : [];
-
-      if (!Array.isArray(keywordsArray)) {
+        ? keywords.split(",").map((kw) => kw.trim())
+        : [];
+  
+      const uniqueKeywords = [...new Set(keywordsArray)]; // Remove duplicatas
+  
+      if (!Array.isArray(uniqueKeywords)) {
         throw new Error("O campo 'keywords' deve ser um array ou uma string separada por vírgulas.");
       }
+  
       const category = await categoryService.updateCategory(id, {
         name,
         color,
-        keywords: keywordsArray,
+        keywords: uniqueKeywords, // Envia array único para o serviço
         userId,
       });
-
+  
       return res.status(200).json(category);
     } catch (error) {
       console.error("Error updating category:", error.message);
       return res.status(500).json({ error: "Erro ao atualizar Categoria" });
     }
   }
+  
 
   // Exclusão de categoria (compartilhado)
   async delete(req, res) {
