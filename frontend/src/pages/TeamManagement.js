@@ -16,7 +16,7 @@ export const TeamManagement = () => {
     try {
       const response = await api.get("/users/me"); // Endpoint para obter o usuário atual
       const email = response.data.email;
-      
+
       return email;
     } catch (error) {
       console.error("Erro ao obter o usuário logado:", error);
@@ -56,9 +56,6 @@ export const TeamManagement = () => {
         try {
           const response = await api.get(`/teams/${teamId}/members`);
           setTeamMembers((prev) => ({ ...prev, [teamId]: response.data }));
-          // Log dos membros carregados
-          
-          
           showInfoToast("Membros carregados com sucesso!");
         } catch (error) {
           console.error("Erro ao carregar membros do time:", error);
@@ -67,6 +64,7 @@ export const TeamManagement = () => {
       }
     }
   };
+
 
   const createTeam = async () => {
     if (!newTeamName) {
@@ -100,8 +98,10 @@ export const TeamManagement = () => {
       setNewMember({ email: "", role: "member" });
       showSuccessToast("Membro adicionado com sucesso!");
     } catch (error) {
+      const errorMessage =
+        error.response?.data?.error || "Erro ao importar o arquivo.";
       console.error("Erro ao adicionar membro:", error);
-      showErrorToast("Erro ao adicionar o membro. Tente novamente.");
+      showErrorToast(`Erro ao adicionar o membro.\n${errorMessage} Tente novamente.`);
     }
   };
 

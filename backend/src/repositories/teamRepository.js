@@ -2,10 +2,19 @@ const { Team, TeamMember, User } = require("../models");
 
 class TeamRepository {
     async createTeam(name, ownerId) {
-        const team = await Team.create({ name, ownerId });
-        await TeamMember.create({ teamId: team.id, userId: ownerId, role: "owner" });
+        // Cria o time
+        const team = await Team.create({ name });
+    
+        // Adiciona o criador como membro do time com o papel de 'owner'
+        await TeamMember.create({
+            teamId: team.id,
+            userId: ownerId,
+            role: "owner",
+        });
+    
         return team;
     }
+    
 
 
     async getTeams(userId) {
@@ -15,12 +24,11 @@ class TeamRepository {
                     model: TeamMember,
                     as: 'members',
                     where: { userId }, // Filtra apenas times com membros associados ao usuário
-                    required: true, // Garante que só sejam retornados times com membros
+                    required: true,
                 },
             ],
         });
     }
-
 
     async getTeamById(teamId, userId) {
         return await Team.findOne({
@@ -37,18 +45,35 @@ class TeamRepository {
     }
 
     async updateTeam(teamId, name, userId) {
-        const team = await Team.findOne({ where: { id: teamId, ownerId: userId } });
+        // Verifica se o usuário é o dono do time
+        const isOwner = await TeamMember.findOne({
+            where: { teamId, userId, role: "owner" },
+        });
+    
+        if (!isOwner) return null;
+    
+        // Atualiza o nome do time
+        const team = await Team.findByPk(teamId);
         if (!team) return null;
+    
         team.name = name;
         return await team.save();
     }
+    
 
     async deleteTeam(teamId, userId) {
-        const team = await Team.findOne({ where: { id: teamId, ownerId: userId } });
-        if (!team) return null;
+        // Verifica se o usuário é o dono do time
+        const isOwner = await TeamMember.findOne({
+            where: { teamId, userId, role: "owner" },
+        });
+    
+        if (!isOwner) return null;
+    
+        // Exclui o time
         await Team.destroy({ where: { id: teamId } });
         return true;
     }
+    
 
 
     async addMemberByEmail(teamId, email, role, adminId) {
