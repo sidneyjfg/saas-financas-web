@@ -1,5 +1,5 @@
 import { Routes, Route } from "react-router-dom";
-import { HomePage, AboutPage, ServicesPage, PricingPage, ReportsPage, GoalsPage, LoginPage, RegisterPage, TeamManagement, CategoriesPage, TransactionsPage } from "./pages/";
+import { HomePage, AboutPage, ServicesPage, PricingPage, ReportsPage, GoalsPage, LoginPage, RegisterPage, TeamManagement, CategoriesPage, TransactionsPage, OverviewPage, TransactionsTeamPage, GoalsBudgetsPage, AuditLogsPage, SettingsPage } from "./pages/";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 
@@ -53,14 +53,21 @@ function AppRoutes() {
         }
       />
 
+      {/* Rotas Aninhadas para Team Management */}
       <Route
-        path="/team-management"
+        path="/team-management/*"
         element={
           <ProtectedRoute requiredPlan="Premium">
             <TeamManagement />
           </ProtectedRoute>
         }
-      />
+      >
+        <Route path=":teamId/overview" element={<OverviewPage />} />
+        <Route path=":teamId/transactions" element={<TransactionsTeamPage />} />
+        <Route path=":teamId/goals-budgets" element={<GoalsBudgetsPage />} />
+        <Route path=":teamId/audit-logs" element={<AuditLogsPage />} />
+        <Route path=":teamId/settings" element={<SettingsPage />} />
+      </Route>
     </Routes>
   );
 }
