@@ -159,15 +159,23 @@ class TransactionService {
                 .on("data", (row) => {
                     try {
                         if (row.date && row.amount && row.title) {
+                            const amount = parseFloat(row.amount);
+    
+                            // Define o tipo da transação baseado no valor
+                            const type = amount < 0 ? "income" : "expense";
+    
+                            // Encontra a categoria correspondente ou usa "Nubank"
                             const matchedCategory = categories.find((category) =>
-                                category.keywords.some((keyword) => row.title.toLowerCase().includes(keyword))
+                                category.keywords.some((keyword) =>
+                                    row.title.toLowerCase().includes(keyword)
+                                )
                             );
     
                             transactions.push({
                                 date: new Date(row.date),
-                                type: row.type === "income" ? "income" : "expense",
+                                type,
                                 categoryId: matchedCategory ? matchedCategory.id : nubankCategory.id,
-                                amount: parseFloat(row.amount),
+                                amount: Math.abs(amount), // Sempre salva como valor positivo
                                 description: row.title,
                                 userId,
                             });
@@ -185,9 +193,6 @@ class TransactionService {
         }
         return transactions.length;
     }
-    
-
-
 
     async updateCategories(userId) {
         
