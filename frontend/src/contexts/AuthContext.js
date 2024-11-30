@@ -33,7 +33,6 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const token = localStorage.getItem("token");
     const plan = localStorage.getItem("userPlan");
-    console.log("Restoring from localStorage:", { token, plan });
     if (token && plan) {
       setIsAuthenticated(true);
       setUserPlan(plan);

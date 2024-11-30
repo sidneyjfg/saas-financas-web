@@ -16,7 +16,7 @@ export const TeamManagement = () => {
     try {
       const response = await api.get("/users/me"); // Endpoint para obter o usuário atual
       const email = response.data.email;
-      console.log("Email do usuário logado:", email);
+      
       return email;
     } catch (error) {
       console.error("Erro ao obter o usuário logado:", error);
@@ -57,8 +57,8 @@ export const TeamManagement = () => {
           const response = await api.get(`/teams/${teamId}/members`);
           setTeamMembers((prev) => ({ ...prev, [teamId]: response.data }));
           // Log dos membros carregados
-          console.log("Membros do time carregados:", response.data);
-          console.log("Usuário atual:", currentUserEmail);
+          
+          
           showInfoToast("Membros carregados com sucesso!");
         } catch (error) {
           console.error("Erro ao carregar membros do time:", error);

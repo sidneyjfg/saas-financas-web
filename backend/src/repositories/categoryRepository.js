@@ -3,7 +3,6 @@ const { Category } = require('../models');
 class CategoryRepository {
   // Buscar categorias Premium de um usuário
   async findAllPremiumByUser(userId) {
-    console.log("findAllPremiumByUser, ", userId);
     return await Category.findAll({
       where: { userId },
       attributes: ['id', 'name', 'color', 'keywords'], // Inclua 'keywords'

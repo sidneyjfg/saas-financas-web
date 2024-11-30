@@ -68,8 +68,6 @@ class TransactionController {
     }
 
     try {
-      console.log("Usuário autenticado:", userId); // Log para verificar se userId está presente
-
       const transaction = await transactionService.createTransaction({
         date,
         type,
@@ -115,7 +113,6 @@ class TransactionController {
 
 
   async updateCategories(req, res) {
-    console.log("Estou aqui");
     const userId = req.user?.id; // Certifique-se de que req.user existe
     if (!userId) {
       return res.status(400).json({ error: "userId não encontrado na requisição" });
@@ -140,7 +137,6 @@ class TransactionController {
       await transactionService.deleteTransaction(id, userId);
       return res.status(200).json({ message: 'Transação excluída com sucesso.' });
     } catch (error) {
-      console.log("OI");
       console.error('Erro ao excluir transação:', error.message);
       return res.status(500).json({ error: 'Erro ao excluir transação.' });
     }

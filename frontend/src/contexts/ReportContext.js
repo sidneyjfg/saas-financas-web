@@ -8,12 +8,10 @@ export const ReportProvider = ({ children }) => {
   const [shouldReload, setShouldReload] = useState(false);
 
   const triggerReload = () => {
-    console.log("triggerReload chamado");
     setShouldReload(true);
   };
   
   const resetReload = () => {
-    console.log("resetReload chamado");
     setShouldReload(false);
   };
 

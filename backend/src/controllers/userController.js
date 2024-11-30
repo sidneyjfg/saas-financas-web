@@ -21,8 +21,7 @@ class UserController {
   }
 
   async login(req, res) {
-    console.log("UserController.login called with:", req.body);
-  
+ 
     const { email, password } = req.body;
   
     if (!email || !password) {
@@ -31,8 +30,7 @@ class UserController {
   
     try {
       const result = await userService.login({ email, password });
-      console.log("Login successful:", result);
-  
+ 
       return res.status(200).json({
         token: result.token, // Certifique-se de que o token está aqui
         plan: result.user.plan, // Certifique-se de que o plano está aqui

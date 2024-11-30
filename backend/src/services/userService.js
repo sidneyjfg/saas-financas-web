@@ -10,10 +10,7 @@ class UserService {
       throw new Error("Invalid plan selected");
     }
 
-    console.log("Password provided for registration:", password); // Log da senha recebida
-
     const hashedPassword = await bcrypt.hash(password, 10);
-    console.log("Generated hashed password:", hashedPassword); // Log do hash gerado
 
     const user = await userRepository.create({
       name,
@@ -36,25 +33,17 @@ class UserService {
 
 
   async login({ email, password }) {
-    console.log("Password provided for login:", password); // Log da senha fornecida
-
     const user = await userRepository.findByEmail(email);
     if (!user) {
       throw new Error("Invalid email or password");
     }
 
-    console.log("Stored hashed password from database:", user.password); // Log do hash armazenado
-
     const isPasswordValid = await bcrypt.compare(password, user.password);
-    console.log("Password validation result:", isPasswordValid); // Log do resultado da comparação
-
     if (!isPasswordValid) {
       throw new Error("Invalid email or password");
     }
 
     const plan = await planRepository.findById(user.planId);
-    console.log("Plan found for user:", plan);
-
     if (!plan) {
       throw new Error("User plan not found");
     }

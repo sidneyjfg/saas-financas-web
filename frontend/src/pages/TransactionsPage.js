@@ -80,7 +80,7 @@ export const TransactionsPage = () => {
                 onConfirm: async () => {
                     try {
                         // Envia o userId como query params na requisição DELETE
-                        console.log("Linha 87");
+                        
                         await api.delete(`/transactions/delete-all/${userId}`);
 
                         // Limpa a lista de transações e reseta o hashId
@@ -271,7 +271,7 @@ export const TransactionsPage = () => {
             message: `Tem certeza de que deseja excluir ${selectedTransactions.length} transações?`,
             onConfirm: async () => {
                 try {
-                    console.log(selectedTransactions);
+                    
                     await api.delete("/transactions/batch-delete", {
                         data: { ids: selectedTransactions }, // Envia os IDs no corpo
                     });
@@ -559,7 +559,7 @@ export const TransactionsPage = () => {
                                         {transaction.category?.name || "Sem Categoria"}
                                     </td>
                                     <td className="py-4 px-6 text-gray-700 text-sm">
-                                        R$ {formatCurrency(transaction.amount)}
+                                        $ {formatCurrency(transaction.amount)}
                                     </td>
                                     <td className="py-4 px-6 text-gray-700 text-sm">
                                         {transaction.description.replace(/\d+(\.\d+)?/g, (match) => formatCurrency(Number(match)))}

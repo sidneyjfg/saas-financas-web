@@ -22,7 +22,7 @@ class TransactionService {
     // Cria uma nova transação
     async createTransaction(transactionData) {
         try {
-            console.log("Transação sendo criada: ", transactionData);
+            
 
             // Verificar se userId está presente
             if (!transactionData.userId) {
@@ -39,7 +39,7 @@ class TransactionService {
             }
 
             const transaction = await transactionRepository.create(transactionData);
-            console.log("Transação criada com sucesso: ", transaction);
+            
 
             // Atualizar progresso da meta, se aplicável
             if (transactionData.categoryId) {
@@ -60,7 +60,7 @@ class TransactionService {
             throw new Error("categoryId deve ser um número válido.");
         }
 
-        console.log("Dados recebidos no serviço para atualização:", transactionData);
+        
 
         const transaction = await transactionRepository.findById(id);
 
@@ -90,7 +90,7 @@ class TransactionService {
         if (transaction.userId !== userId) {
             throw new Error('Usuário não autorizado a excluir esta transação');
         }
-        console.log(id, " e ", userId);
+        
         await transactionRepository.delete(id, userId);
 
         // Atualizar progresso da meta, se aplicável
@@ -190,13 +190,13 @@ class TransactionService {
 
 
     async updateCategories(userId) {
-        console.log("Toma o userID: ", userId);
+        
 
         const transactions = await transactionRepository.findAllByUser(userId);
         const categories = await categoryRepository.findAllPremiumByUser(userId);
 
-        console.log("Transações encontradas: ", transactions);
-        console.log("Categorias encontradas: ", categories);
+        
+        
 
         let updatedCount = 0;
 
@@ -218,7 +218,7 @@ class TransactionService {
             }
         }
 
-        console.log("Categorias atualizadas: ", updatedCount);
+        
         return updatedCount;
     }
 

@@ -14,7 +14,6 @@ class CategoryController {
       }
 
       const categories = await categoryService.getPremiumCategories(userId);
-      console.log(categories);
       return res.status(200).json(categories);
     } catch (error) {
       console.error("Error fetching Premium categories:", error.message);

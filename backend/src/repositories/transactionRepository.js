@@ -3,7 +3,6 @@ const { Transaction, Category, Sequelize } = require('../models');
 class TransactionRepository {
   // Busca todas as transações de um usuário
   async findAllByUser(userId) {
-    console.log("findAllByUser: ", userId);
     return await Transaction.findAll({
       where: { userId },
       include: [
@@ -38,7 +37,6 @@ class TransactionRepository {
   }
   // Busca o resumo mensal agrupado por mês e tipo
   async getMonthlySummary(userId) {
-    console.log('getMonthlySummary called with userId:', userId);
 
     return await Transaction.findAll({
       where: { userId },
@@ -152,8 +150,6 @@ class TransactionRepository {
         }
 
         // Confirma que os IDs estão sendo processados corretamente
-        console.log("IDs recebidos para exclusão:", ids);
-
         await Transaction.destroy({
             where: {
                 id: ids, // Certifique-se de que está lidando com um array

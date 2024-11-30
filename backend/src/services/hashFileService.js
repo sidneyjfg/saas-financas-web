@@ -2,7 +2,6 @@ const hashRepository = require("../repositories/hashFileRepository");
 
 const hashService = {
     async getHashByUserId(userId) {
-        console.log("getHashByUser: ",userId);
         if (!userId) {
             throw new Error("O ID do usuário é obrigatório para buscar o hash.");
         }

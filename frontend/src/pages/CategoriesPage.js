@@ -100,7 +100,6 @@ export const CategoriesPage = () => {
   
 
   const handleEditCategory = (category) => {
-    console.log(category);
     setNewCategory({
       name: category.name,
       color: category.color || "#000000", // Cor padrão

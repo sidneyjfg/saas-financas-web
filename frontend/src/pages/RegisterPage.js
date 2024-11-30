@@ -23,7 +23,6 @@ export const RegisterPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Sending data:", formData); // Log dos dados antes do envio
     try {
       await register(
         formData.name,
