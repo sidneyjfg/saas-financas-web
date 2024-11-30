@@ -24,11 +24,12 @@ const PORT = process.env.PORT || 3000;
 
 app.use(
   cors({
-    origin: "http://localhost:3000", // Permite apenas o frontend acessar
-    methods: ["GET", "POST", "PUT", "DELETE"], // Métodos HTTP permitidos
-    credentials: true, // Caso precise de cookies
+    origin: process.env.CLIENT_URL || "http://localhost:3000", // Pega do .env
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
   })
 );
+
 app.use(express.json());
 
 // Rotas
