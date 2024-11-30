@@ -190,6 +190,22 @@ class TransactionController {
       return res.status(500).json({ error: "Erro ao excluir transações e hash." });
     }
   }
+  async batchDeleteTransactions(req, res) {
+    const { ids } = req.body;
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({ error: "Nenhuma transação foi selecionada para exclusão." });
+    }
+
+    try {
+        await transactionService.batchDeleteTransactions(ids);
+        return res.status(200).json({ message: "Transações excluídas com sucesso." });
+    } catch (error) {
+        console.error("Erro ao excluir transações:", error);
+        return res.status(500).json({ error: "Erro ao excluir transações." });
+    }
+}
+
 
 }
 

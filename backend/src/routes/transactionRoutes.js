@@ -17,6 +17,8 @@ router.post('/', authenticate, transactionController.create);
 // Atualizar transação
 router.put('/update-categories', authenticate, transactionController.updateCategories);
 router.put('/:id', authenticate, transactionController.update);
+router.delete('/batch-delete', authenticate, transactionController.batchDeleteTransactions);
+
 // Excluir transação
 router.delete('/:id', authenticate, transactionController.delete);
 
@@ -68,4 +70,6 @@ router.post(
 );
 
 router.delete('/delete-all/:id', authenticate, planMiddleware('Premium'), transactionController.deleteAllTransactions);
+
+
 module.exports = router;

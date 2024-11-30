@@ -145,6 +145,26 @@ class TransactionRepository {
     }
   }
 
+  async batchDelete(ids) {
+    try {
+        if (!Array.isArray(ids)) {
+            throw new Error("IDs fornecidos não são um array.");
+        }
+
+        // Confirma que os IDs estão sendo processados corretamente
+        console.log("IDs recebidos para exclusão:", ids);
+
+        await Transaction.destroy({
+            where: {
+                id: ids, // Certifique-se de que está lidando com um array
+            },
+        });
+    } catch (error) {
+        console.error("Erro no repository ao excluir transações:", error.message);
+        throw error;
+    }
+}
+
 
 }
 

@@ -244,7 +244,14 @@ class TransactionService {
             throw error; // Relança o erro para o controlador
         }
     }
-    
+    async  batchDeleteTransactions(ids) {
+        try {
+            await transactionRepository.batchDelete(ids);
+        } catch (error) {
+            console.error("Erro no service ao excluir transações:", error.message);
+            throw new Error("Erro ao excluir transações.");
+        }
+    }
     
 }
 

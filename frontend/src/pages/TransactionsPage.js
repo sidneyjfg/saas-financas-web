@@ -15,6 +15,7 @@ const monthNames = [
 export const TransactionsPage = () => {
     const { userPlan } = useAuth(); // Recupera o plano do usuário
     const [transactions, setTransactions] = useState([]);
+    const [selectedTransactions, setSelectedTransactions] = useState([]); // Armazena os IDs selecionados
     const [categories, setCategories] = useState([]);
     const [newTransaction, setNewTransaction] = useState({
         date: "",
@@ -32,9 +33,6 @@ export const TransactionsPage = () => {
     });
 
     const { triggerReload } = useReport();
-
-
-
 
     const handleFileUpload = async (event) => {
         const file = event.target?.files?.[0];
@@ -184,6 +182,7 @@ export const TransactionsPage = () => {
             // Dispara o reload para o contexto
             // Atualizar a lista de transações após a atualização
             const transactionsResponse = await api.get("/transactions");
+            showInfoToast("Categorias sincronizadas!");
             setTransactions(transactionsResponse.data);
             triggerReload(); // Aqui dispara a atualização global
         } catch (error) {
@@ -204,29 +203,6 @@ export const TransactionsPage = () => {
             description: transaction.description,
         });
         setEditingTransaction(transaction);
-    };
-
-    // Remover Transação
-    const handleDeleteTransaction = (id) => {
-        showConfirmDialog({
-            title: "Confirmar Exclusão",
-            message: "Tem certeza que deseja excluir esta transação?",
-            onConfirm: async () => {
-                try {
-                    await api.delete(`/transactions/${id}`);
-                    setTransactions((prevTransactions) =>
-                        prevTransactions.filter((transaction) => transaction.id !== id)
-                    );
-                    showSuccessToast("Transação removida com sucesso.");
-                } catch (error) {
-                    const errorMessage = error.response?.data?.error || "Erro desconhecido.";
-                    showErrorToast(`Erro ao excluir transação: ${errorMessage}`);
-                }
-            },
-            onCancel: () => {
-                showInfoToast("Ação cancelada."); // Opcional
-            },
-        });
     };
 
     const handleCancelEdit = () => {
@@ -275,6 +251,58 @@ export const TransactionsPage = () => {
             matchesCategory
         );
     });
+
+    const handleSelectTransaction = (transactionId) => {
+        setSelectedTransactions((prevSelected) => {
+            if (prevSelected.includes(transactionId)) {
+                // Remove se já estiver selecionado
+                return prevSelected.filter((id) => id !== transactionId);
+            } else {
+                // Adiciona se não estiver selecionado
+                return [...prevSelected, transactionId];
+            }
+        });
+    };
+    const handleDeleteSelectedTransactions = () => {
+        if (selectedTransactions.length === 0) return;
+
+        showConfirmDialog({
+            title: "Confirmar Exclusão",
+            message: `Tem certeza de que deseja excluir ${selectedTransactions.length} transações?`,
+            onConfirm: async () => {
+                try {
+                    console.log(selectedTransactions);
+                    await api.delete("/transactions/batch-delete", {
+                        data: { ids: selectedTransactions }, // Envia os IDs no corpo
+                    });
+
+                    // Remove as transações localmente
+                    setTransactions((prevTransactions) =>
+                        prevTransactions.filter((transaction) => !selectedTransactions.includes(transaction.id))
+                    );
+
+                    // Limpa a seleção
+                    setSelectedTransactions([]);
+                    showSuccessToast("Transações removidas com sucesso.");
+                } catch (error) {
+                    const errorMessage = error.response?.data?.error || "Erro desconhecido.";
+                    showErrorToast(`Erro ao excluir transações: ${errorMessage}`);
+                }
+            },
+            onCancel: () => {
+                showInfoToast("Ação cancelada.");
+            },
+        });
+    };
+
+
+    const handleSelectAll = () => {
+        if (selectedTransactions.length === filteredTransactions.length) {
+            setSelectedTransactions([]); // Desmarca todos
+        } else {
+            setSelectedTransactions(filteredTransactions.map((t) => t.id)); // Seleciona todos
+        }
+    };
 
     if (loading) {
         return <p className="text-center mt-6 text-gray-500">Carregando...</p>;
@@ -346,17 +374,35 @@ export const TransactionsPage = () => {
                     </div>
 
                     {/* Botões de Ações */}
-                    <div className="flex gap-4 mt-4">
+                    <div className="flex flex-wrap gap-2 mt-4 items-center">
+                        {/* Botão Adicionar/Atualizar */}
                         <button
                             onClick={handleSaveTransaction}
-                            className="px-4 py-2 bg-teal-600 text-white font-bold rounded-lg shadow-md hover:bg-teal-700 transition-all duration-300"
+                            className="px-4 py-2 bg-teal-600 text-white font-bold rounded-md shadow hover:bg-teal-700 transition-all duration-300"
                         >
                             {editingTransaction ? "Atualizar" : "Adicionar"}
                         </button>
+
+                        {/* Botão de Importar CSV */}
+                        {userPlan === "Premium" && (
+                            <label className="cursor-pointer">
+                                <input
+                                    type="file"
+                                    accept=".csv"
+                                    onChange={handleFileUpload}
+                                    className="hidden"
+                                />
+                                <span className="px-4 py-2 bg-teal-600 text-white font-bold rounded-md shadow hover:bg-teal-700 transition-all cursor-pointer">
+                                    Importar CSV
+                                </span>
+                            </label>
+                        )}
+
+                        {/* Botão Cancelar */}
                         {editingTransaction && (
                             <button
                                 onClick={handleCancelEdit}
-                                className="px-4 py-2 bg-gray-400 text-white font-bold rounded-lg shadow-md hover:bg-gray-500 transition-all duration-300"
+                                className="px-4 py-2 bg-gray-400 text-white font-bold rounded-md shadow hover:bg-gray-500 transition-all duration-300"
                             >
                                 Cancelar
                             </button>
@@ -428,20 +474,16 @@ export const TransactionsPage = () => {
                             placeholder="Filtrar por Categoria"
                         />
 
-                        {/* Botão de Importar CSV */}
-                        {userPlan === "Premium" && (
-                            <label className="cursor-pointer">
-                                <input
-                                    type="file"
-                                    accept=".csv"
-                                    onChange={handleFileUpload}
-                                    className="hidden"
-                                />
-                                <span className="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-all cursor-pointer">
-                                    Importar CSV
-                                </span>
-                            </label>
-                        )}
+                        <button
+                            onClick={handleDeleteSelectedTransactions}
+                            disabled={selectedTransactions.length === 0}
+                            className={`px-4 py-2 font-bold rounded-lg shadow-md transition-all duration-300 ${selectedTransactions.length > 0
+                                ? "bg-red-600 text-white hover:bg-red-700"
+                                : "bg-gray-400 text-gray-200 cursor-not-allowed"
+                                }`}
+                        >
+                            Remover Selecionados
+                        </button>
 
                         {/* Botão de Excluir Tudo */}
                         <button
@@ -459,6 +501,16 @@ export const TransactionsPage = () => {
                     <table className="table-auto w-full border-collapse">
                         <thead>
                             <tr className="bg-teal-600 text-white">
+                                <th className="py-4 px-6 text-center">
+                                    <input
+                                        type="checkbox"
+                                        checked={
+                                            selectedTransactions.length === filteredTransactions.length &&
+                                            filteredTransactions.length > 0
+                                        }
+                                        onChange={handleSelectAll}
+                                    />
+                                </th>
                                 <th className="py-4 px-6 text-left text-sm font-bold uppercase tracking-wider">
                                     Data
                                 </th>
@@ -490,9 +542,15 @@ export const TransactionsPage = () => {
                             {filteredTransactions.map((transaction, index) => (
                                 <tr
                                     key={transaction.id}
-                                    className={`border-b ${index % 2 === 0 ? "bg-gray-100" : "bg-white"
-                                        } hover:bg-teal-100 transition-colors duration-200`}
+                                    className={`border-b ${index % 2 === 0 ? "bg-gray-100" : "bg-white"} hover:bg-teal-100 transition-colors duration-200`}
                                 >
+                                    <td className="py-4 px-6 text-center">
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedTransactions.includes(transaction.id)}
+                                            onChange={() => handleSelectTransaction(transaction.id)}
+                                        />
+                                    </td>
                                     <td className="py-4 px-6 text-gray-700 text-sm">
                                         {formatDate(transaction.date)}
                                     </td>
@@ -504,10 +562,7 @@ export const TransactionsPage = () => {
                                         R$ {formatCurrency(transaction.amount)}
                                     </td>
                                     <td className="py-4 px-6 text-gray-700 text-sm">
-                                        {transaction.description.replace(
-                                            /\d+(\.\d+)?/g,
-                                            (match) => formatCurrency(Number(match))
-                                        )}
+                                        {transaction.description.replace(/\d+(\.\d+)?/g, (match) => formatCurrency(Number(match)))}
                                     </td>
                                     <td className="py-4 px-6 text-sm">
                                         <button
@@ -516,16 +571,11 @@ export const TransactionsPage = () => {
                                         >
                                             Editar
                                         </button>
-                                        <button
-                                            onClick={() => handleDeleteTransaction(transaction.id)}
-                                            className="text-red-600 hover:text-red-800 font-semibold transition-all duration-200"
-                                        >
-                                            Remover
-                                        </button>
                                     </td>
                                 </tr>
                             ))}
                         </tbody>
+
                     </table>
                 </div>
             </div>
