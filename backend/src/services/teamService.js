@@ -31,15 +31,41 @@ class TeamService {
     // Busca os membros do time
     return await teamRepository.getMembersByTeam(teamId);
   }
-  
+
   async addMemberByEmail(teamId, email, role, adminId) {
     return await teamRepository.addMemberByEmail(teamId, email, role, adminId);
   }
-  
+
 
   async removeMember(teamId, userId, adminId) {
     return await teamRepository.removeMember(teamId, userId, adminId);
   }
+
+  async getTeamsOverview(userId) {
+    const teams = await teamRepository.getTeamsByUser(userId);
+
+    return teams.map((team) => ({
+      id: team.id,
+      name: team.name,
+      updatedAt: team.updatedAt, // Inclua o campo updatedAt
+      totalMembers: team.members.length,
+      admins: team.members
+        .filter((member) => member.role === "admin")
+        .map((admin) => ({
+          id: admin.user.id,
+          name: admin.user.name,
+          email: admin.user.email,
+        })),
+    }));
+  }
+  async getAuditLogs(userId) {
+    return await teamRepository.getAuditLogs(userId);
+}
+
+
+
+
+
 }
 
 module.exports = new TeamService();

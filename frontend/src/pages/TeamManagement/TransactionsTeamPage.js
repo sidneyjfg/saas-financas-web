@@ -6,8 +6,8 @@ export const TransactionsTeamPage = () => {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold">Transações do Time {teamId}</h2>
-      <p>Aqui você pode visualizar e gerenciar as transações do time.</p>
+      <h2 className="text-2xl font-bold">Transações do Time </h2>
+      <p>Aqui você poderá visualizar e gerenciar as transações do time.</p>
     </div>
   );
 };

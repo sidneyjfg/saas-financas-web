@@ -1,20 +1,22 @@
-const { Team, TeamMember, User } = require("../models");
+const { Team, TeamMember, User, AuditLog } = require("../models");
 
 class TeamRepository {
     async createTeam(name, ownerId) {
-        // Cria o time
         const team = await Team.create({ name });
     
-        // Adiciona o criador como membro do time com o papel de 'owner'
         await TeamMember.create({
             teamId: team.id,
             userId: ownerId,
             role: "owner",
         });
     
+        // Registrar log de criação do time
+        await this.logAction(ownerId, "create_team", { teamName: name }, team.id);
+    
         return team;
     }
     
+
 
 
     async getTeams(userId) {
@@ -45,39 +47,50 @@ class TeamRepository {
     }
 
     async updateTeam(teamId, name, userId) {
-        // Verifica se o usuário é o dono do time
         const isOwner = await TeamMember.findOne({
             where: { teamId, userId, role: "owner" },
         });
-    
         if (!isOwner) return null;
     
-        // Atualiza o nome do time
         const team = await Team.findByPk(teamId);
         if (!team) return null;
     
         team.name = name;
-        return await team.save();
+        await team.save();
+    
+        // Registrar log de atualização do time
+        await this.logAction(userId, "update_team", {
+            updatedName: name,
+        }, teamId);
+    
+        return team;
     }
     
 
+
     async deleteTeam(teamId, userId) {
-        // Verifica se o usuário é o dono do time
         const isOwner = await TeamMember.findOne({
             where: { teamId, userId, role: "owner" },
         });
-    
         if (!isOwner) return null;
     
-        // Exclui o time
+        const team = await Team.findByPk(teamId);
+        if (!team) return null;
+    
         await Team.destroy({ where: { id: teamId } });
+    
+        // Registrar log de exclusão do time
+        await this.logAction(userId, "delete_team", {
+            teamName: team.name,
+        }, teamId);
+    
         return true;
     }
     
 
 
+
     async addMemberByEmail(teamId, email, role, adminId) {
-        // Verifica se o usuário logado é "admin" ou "owner"
         const isAdmin = await TeamMember.findOne({
             where: {
                 teamId,
@@ -85,65 +98,67 @@ class TeamRepository {
                 role: ["admin", "owner"],
             },
         });
-
         if (!isAdmin) {
             throw new Error("Você não tem permissão para adicionar membros a este time.");
         }
-
-        // Busca o usuário pelo email
+    
         const user = await User.findOne({ where: { email } });
         if (!user) {
             throw new Error("Usuário não encontrado.");
         }
-
-        // Verifica se o usuário já é membro do time
+    
         const existingMember = await TeamMember.findOne({
-            where: {
-                teamId,
-                userId: user.id,
-            },
+            where: { teamId, userId: user.id },
         });
         if (existingMember) {
             throw new Error("Usuário já é membro deste time.");
         }
-
-        // Cria o membro no time
+    
         const newMember = await TeamMember.create({
             teamId,
             userId: user.id,
             role,
         });
-
-        // Retorna o membro com os detalhes do usuário
+    
+        // Registrar log de adição de membro
+        await this.logAction(adminId, "add_member", {
+            memberId: user.id,
+            memberEmail: email,
+            role,
+        }, teamId);
+    
         return {
             id: newMember.id,
-            name: user.name, // Busca o nome do usuário
+            name: user.name,
             email: user.email,
             role: newMember.role,
         };
     }
-
+    
+    async verifyMembership(teamId, userId) {
+        return await TeamMember.findOne({ where: { teamId, userId } });
+    }
     async removeMember(teamId, userId, adminId) {
         const isAdmin = await TeamMember.findOne({
             where: {
-                teamId, userId: adminId, role: ["admin", "owner"],
-            }
-        });
-        if (!isAdmin) throw new Error("Sem permissão para remover membros.");
-        const member = await TeamMember.findOne({ where: { teamId, userId } });
-        if (!member) return null;
-        await member.destroy();
-        return true;
-    }
-    async verifyMembership(teamId, userId) {
-        const member = await TeamMember.findOne({
-            where: {
                 teamId,
-                userId,
+                userId: adminId,
+                role: ["admin", "owner"],
             },
         });
-        return !!member; // Retorna true se o usuário for membro do time
+        if (!isAdmin) throw new Error("Sem permissão para remover membros.");
+    
+        const member = await TeamMember.findOne({ where: { teamId, userId } });
+        if (!member) return null;
+    
+        await member.destroy();
+    
+        // Registrar log de remoção do membro
+        await this.logAction(adminId, "remove_member", { removedUserId: userId }, teamId);
+    
+        return true;
     }
+    
 
     // Busca os membros do time
     async getMembersByTeam(teamId) {
@@ -166,6 +181,53 @@ class TeamRepository {
             role: member.role, // Papel no time
         }));
     }
+    async getTeamsByUser(userId) {
+        return await Team.findAll({
+            attributes: ["id", "name", "updatedAt"], // Inclui o campo updatedAt
+            include: [
+                {
+                    model: TeamMember,
+                    as: "members",
+                    where: {
+                        userId,
+                        role: ["admin", "owner"],
+                    },
+                    required: true,
+                    include: [
+                        {
+                            model: User,
+                            as: "user",
+                            attributes: ["id", "name", "email"],
+                        },
+                    ],
+                },
+            ],
+        });
+    }
+
+    async logAction(userId, action, details, teamId) {
+        if (!teamId) {
+            throw new Error("O campo 'teamId' é obrigatório para registrar ações de auditoria.");
+        }
+    
+        await AuditLog.create({
+            userId,
+            action,
+            details: JSON.stringify(details), // Serializa os detalhes
+            teamId,
+        });
+    }
+    
+
+
+    async getAuditLogs(userId) {
+        return await AuditLog.findAll({
+            where: { userId }, // Filtra logs pelo usuário autenticado
+            attributes: { exclude: ['updatedAt'] }, // Exclui `updatedAt` da consulta
+            order: [["createdAt", "DESC"]], // Ordena por data decrescente
+        });
+    }
+
 }
 
 module.exports = new TeamRepository();

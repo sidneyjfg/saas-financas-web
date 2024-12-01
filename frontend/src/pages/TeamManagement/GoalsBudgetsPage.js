@@ -7,7 +7,7 @@ export const GoalsBudgetsPage = () => {
   return (
     <div>
       <h2 className="text-2xl font-bold">Metas e Orçamentos do Time {teamId}</h2>
-      <p>Aqui você pode gerenciar metas e orçamentos do time.</p>
+      <p>Aqui você poderá gerenciar metas e orçamentos do time.</p>
     </div>
   );
 };

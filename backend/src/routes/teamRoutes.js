@@ -4,6 +4,9 @@ const authenticate = require("../middlewares/authenticate");
 
 const router = express.Router();
 
+router.get("/overview", authenticate, teamController.getTeamsOverview);
+router.get("/audit-logs", authenticate, teamController.getAuditLogs);
+
 // Rotas de times
 router.post("/", authenticate, teamController.createTeam); // Criar um time
 router.get("/", authenticate, teamController.getTeams); // Listar os times do usuário
@@ -15,5 +18,7 @@ router.delete("/:id", authenticate, teamController.deleteTeam); // Excluir um ti
 router.get("/:id/members", authenticate, teamController.getMembersByTeam);
 router.post("/:id/members", authenticate, teamController.addMember); // Adicionar membro a um time
 router.delete("/:id/members/:userId", authenticate, teamController.removeMember); // Remover membro de um time
+
+
 
 module.exports = router;

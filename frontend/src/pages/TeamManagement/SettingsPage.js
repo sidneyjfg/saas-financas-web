@@ -7,7 +7,7 @@ export const SettingsPage = () => {
   return (
     <div>
       <h2 className="text-2xl font-bold">Configurações do Time {teamId}</h2>
-      <p>Aqui você pode alterar as configurações do time.</p>
+      <p>Aqui você poderá alterar as configurações do time.</p>
     </div>
   );
 };

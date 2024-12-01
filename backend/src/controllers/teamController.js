@@ -76,32 +76,32 @@ class TeamController {
         const { id: teamId } = req.params; // ID do time
         const { email, role } = req.body; // Recebe o email e o role
         const adminId = req.user.id; // ID do usuário logado
-      
+
         if (!email || !role) {
-          return res.status(400).json({ error: "Os campos 'email' e 'role' são obrigatórios." });
+            return res.status(400).json({ error: "Os campos 'email' e 'role' são obrigatórios." });
         }
-      
+
         try {
-          // Chama o serviço para adicionar o membro
-          const member = await teamService.addMemberByEmail(teamId, email, role, adminId);
-      
-          return res.status(201).json(member);
+            // Chama o serviço para adicionar o membro
+            const member = await teamService.addMemberByEmail(teamId, email, role, adminId);
+
+            return res.status(201).json(member);
         } catch (error) {
-          console.error("Erro ao adicionar membro:", error.message);
-      
-          if (error.message.includes("Você não tem permissão")) {
-            return res.status(403).json({ error: error.message });
-          } else if (error.message.includes("Usuário não encontrado")) {
-            return res.status(404).json({ error: error.message });
-          } else if (error.message.includes("Usuário já é membro")) {
-            return res.status(400).json({ error: error.message });
-          }
-      
-          return res.status(500).json({ error: "Erro ao adicionar membro." });
+            console.error("Erro ao adicionar membro:", error.message);
+
+            if (error.message.includes("Você não tem permissão")) {
+                return res.status(403).json({ error: error.message });
+            } else if (error.message.includes("Usuário não encontrado")) {
+                return res.status(404).json({ error: error.message });
+            } else if (error.message.includes("Usuário já é membro")) {
+                return res.status(400).json({ error: error.message });
+            }
+
+            return res.status(500).json({ error: "Erro ao adicionar membro." });
         }
-      }
-      
-    
+    }
+
+
 
 
 
@@ -122,16 +122,43 @@ class TeamController {
     async getMembersByTeam(req, res) {
         const { id: teamId } = req.params; // ID do time
         const userId = req.user.id; // ID do usuário autenticado
+
+        try {
+            // Chama o serviço para buscar os membros do time
+            const members = await teamService.getMembersByTeam(teamId, userId);
+            return res.status(200).json(members);
+        } catch (error) {
+            console.error("Erro ao listar membros do time:", error.message);
+            return res.status(500).json({ error: "Erro ao listar membros do time." });
+        }
+    }
+
+    async getTeamsOverview(req, res) {
+        const userId = req.user.id; // ID do usuário autenticado
+
+        try {
+            console.log("Obtendo overview dos times para o usuário:", userId);
+
+            // Chama o serviço para obter os dados
+            const overviewData = await teamService.getTeamsOverview(userId);
+            return res.status(200).json(overviewData);
+        } catch (error) {
+            console.error("Erro ao obter overview dos times:", error.message);
+            return res.status(500).json({ error: "Erro ao obter overview dos times." });
+        }
+    }
+
+    async getAuditLogs(req, res) {
+        const userId = req.user.id;
     
         try {
-          // Chama o serviço para buscar os membros do time
-          const members = await teamService.getMembersByTeam(teamId, userId);
-          return res.status(200).json(members);
+            const logs = await teamService.getAuditLogs(userId);
+            return res.status(200).json(logs);
         } catch (error) {
-          console.error("Erro ao listar membros do time:", error.message);
-          return res.status(500).json({ error: "Erro ao listar membros do time." });
+            console.error("Erro ao obter logs de auditoria:", error.message);
+            return res.status(500).json({ error: "Erro ao obter logs de auditoria." });
         }
-      }
+    }
 }
 
 module.exports = new TeamController();

@@ -4,10 +4,7 @@ const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class AuditLog extends Model {
     static associate(models) {
-      // Relacionamento com a tabela Teams
       AuditLog.belongsTo(models.Team, { foreignKey: 'teamId', as: 'team' });
-
-      // Relacionamento com a tabela Users
       AuditLog.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
     }
   }
@@ -37,17 +34,20 @@ module.exports = (sequelize, DataTypes) => {
       details: {
         type: DataTypes.TEXT,
         allowNull: false,
-      },
-      createdAt: {
-        type: DataTypes.DATE,
-        allowNull: false,
-        defaultValue: DataTypes.NOW,
+        get() {
+          const rawValue = this.getDataValue('details');
+          return rawValue ? JSON.parse(rawValue) : null;
+        },
+        set(value) {
+          this.setDataValue('details', JSON.stringify(value));
+        },
       },
     },
     {
       sequelize,
       modelName: 'AuditLog',
       tableName: 'auditLogs',
+      timestamps: true, // Ativa `createdAt` e `updatedAt`
     }
   );
 
