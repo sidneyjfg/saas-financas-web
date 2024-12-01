@@ -16,15 +16,18 @@ class TeamController {
 
     async getTeams(req, res) {
         const userId = req.user.id;
-
+    
         try {
+            console.log("Obtendo times para o usuário:", userId);
             const teams = await teamService.getTeams(userId);
+            console.log("Times encontrados:", teams);
             return res.status(200).json(teams);
         } catch (error) {
             console.error("Erro ao listar times:", error.message);
             return res.status(500).json({ error: "Erro ao listar times." });
         }
     }
+    
 
     async getTeamById(req, res) {
         const { id } = req.params;

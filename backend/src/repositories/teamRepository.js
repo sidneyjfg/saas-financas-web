@@ -21,16 +21,20 @@ class TeamRepository {
 
     async getTeams(userId) {
         return await Team.findAll({
+            attributes: ["id", "name", "createdAt", "updatedAt"], // Inclui os campos necessários da tabela Team
             include: [
                 {
                     model: TeamMember,
-                    as: 'members',
-                    where: { userId }, // Filtra apenas times com membros associados ao usuário
-                    required: true,
+                    as: "members",
+                    attributes: ["id", "role"], // Inclui os campos necessários da associação
+                    where: { userId }, // Filtra pelos times em que o usuário é membro
+                    required: true, // Garante que apenas os times relacionados sejam retornados
                 },
             ],
         });
     }
+    
+    
 
     async getTeamById(teamId, userId) {
         return await Team.findOne({
@@ -69,23 +73,28 @@ class TeamRepository {
 
 
     async deleteTeam(teamId, userId) {
+        // Verifica se o usuário é o dono do time
         const isOwner = await TeamMember.findOne({
             where: { teamId, userId, role: "owner" },
         });
-        if (!isOwner) return null;
+        if (!isOwner) throw new Error("Você não tem permissão para excluir este time.");
     
+        // Recupera os detalhes do time antes de excluir
         const team = await Team.findByPk(teamId);
-        if (!team) return null;
+        if (!team) throw new Error("Time não encontrado.");
     
-        await Team.destroy({ where: { id: teamId } });
-    
-        // Registrar log de exclusão do time
+        // Cria o log de auditoria antes de excluir o time
         await this.logAction(userId, "delete_team", {
+            teamId: team.id,
             teamName: team.name,
-        }, teamId);
+        }, team.id);
+    
+        // Exclui o time
+        await Team.destroy({ where: { id: teamId } });
     
         return true;
     }
+
     
 
 
