@@ -41,10 +41,11 @@ class UserController {
     }
   }
   
-  async getCurrentUser (req, res) {
-    const user = req.user; // O middleware 'authenticate' adiciona o usuário à requisição
+  async getCurrentUser(req, res) {
+    const user = req.user; // Usuário adicionado pelo middleware 'authenticate'
     if (user) {
       res.status(200).json({
+        id: user.id, // Retorna o ID do usuário
         email: user.email,
         role: user.role,
         name: user.name,
@@ -52,7 +53,8 @@ class UserController {
     } else {
       res.status(401).json({ error: "Usuário não autenticado" });
     }
-  };
+  }
+  
 }
 
 module.exports = new UserController();

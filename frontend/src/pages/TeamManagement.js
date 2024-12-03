@@ -11,23 +11,17 @@ export const TeamManagement = () => {
   const [newMember, setNewMember] = useState({ email: "", role: "member" });
   const [loading, setLoading] = useState(false);
   const [currentUserEmail, setCurrentUserEmail] = useState([]);
+  const [loadingTeams, setLoadingTeams] = useState({}); // Armazena o estado de carregamento por time
+  const [currentUserId, setCurrentUserId] = useState(null);
 
-  const fetchCurrentUser = async () => {
-    try {
-      const response = await api.get("/users/me"); // Endpoint para obter o usuário atual
-      const email = response.data.email;
 
-      return email;
-    } catch (error) {
-      console.error("Erro ao obter o usuário logado:", error);
-    }
-  };
 
   useEffect(() => {
     const fetchTeams = async () => {
       try {
         setLoading(true);
         const response = await api.get("/teams");
+        console.log(response.data);
         setTeams(response.data);
       } catch (error) {
         console.error("Erro ao carregar times:", error);
@@ -36,34 +30,81 @@ export const TeamManagement = () => {
         setLoading(false);
       }
     };
-    const loadUser = async () => {
-      const email = await fetchCurrentUser();
-      if (email) {
-        setCurrentUserEmail(email); // Use o setter corretamente
-      }
+    const loadUserData = async () => {
+      await fetchCurrentUser(); // Carrega o userId e o email
+      await fetchTeams(); // Carrega os times
     };
-    loadUser();
+    loadUserData();
     fetchTeams();
   }, []);
 
+  const fetchCurrentUser = async () => {
+    try {
+      const response = await api.get("/users/me"); // Endpoint para obter o usuário atual
+      setCurrentUserId(response.data.id); // Armazena o userId no estado
+      setCurrentUserEmail(response.data.email); // Armazena o email no estado
+    } catch (error) {
+      console.error("Erro ao obter o usuário logado:", error);
+      showErrorToast("Erro ao carregar informações do usuário.");
+    }
+  };
+  
+  // Atualiza as informações dos times ao carregar ou expandir
+  const updateTeamRole = async (teamId) => {
+    try {
+      const response = await api.get(`/teams/${teamId}`); // Retorna detalhes do time
+  
+      // Verifica se o usuário logado é o criador (owner)
+      const isOwner = response.data.members.some(
+        (member) => member.role === "owner" && member.userId === currentUserId
+      );
+  
+      // Atualiza o papel do usuário no time
+      const userRole = response.data.members.find(
+        (member) => member.userId === currentUserId
+      )?.role;
+  
+      setTeams((prev) =>
+        prev.map((team) =>
+          team.id === teamId
+            ? {
+                ...team,
+                role: userRole,
+                isOwner, // Define se o usuário é o dono do time
+              }
+            : team
+        )
+      );
+    } catch (error) {
+      console.error("Erro ao atualizar papel do usuário:", error);
+      showErrorToast("Erro ao carregar informações do time.");
+    }
+  };
+  
+  
+
+  // Chamado ao expandir o time
   const toggleTeamExpansion = async (teamId) => {
     if (expandedTeamIds.includes(teamId)) {
       setExpandedTeamIds(expandedTeamIds.filter((id) => id !== teamId));
     } else {
       setExpandedTeamIds([...expandedTeamIds, teamId]);
+      setLoadingTeams((prev) => ({ ...prev, [teamId]: true }));
 
-      if (!teamMembers[teamId]) {
-        try {
-          const response = await api.get(`/teams/${teamId}/members`);
-          setTeamMembers((prev) => ({ ...prev, [teamId]: response.data }));
-          showInfoToast("Membros carregados com sucesso!");
-        } catch (error) {
-          console.error("Erro ao carregar membros do time:", error);
-          showErrorToast("Erro ao carregar os membros do time.");
-        }
+      try {
+        await updateTeamRole(teamId); // Atualiza o papel do usuário
+        const response = await api.get(`/teams/${teamId}/members`);
+        setTeamMembers((prev) => ({ ...prev, [teamId]: response.data }));
+        showInfoToast("Membros carregados com sucesso!");
+      } catch (error) {
+        console.error("Erro ao carregar membros do time:", error);
+        showErrorToast("Erro ao carregar os membros do time.");
+      } finally {
+        setLoadingTeams((prev) => ({ ...prev, [teamId]: false }));
       }
     }
   };
+
 
 
   const createTeam = async () => {
@@ -108,14 +149,19 @@ export const TeamManagement = () => {
   const removeMember = async (teamId, memberId, memberEmail, isCurrentUser) => {
     const currentTeamMembers = teamMembers[teamId] || [];
     const admins = currentTeamMembers.filter((member) => member.role === "admin");
-
+    const isOwner = teams.find((team) => team.id === teamId)?.isOwner;
+  
     if (isCurrentUser) {
+      if (isOwner) {
+        showErrorToast("Você não pode sair do time enquanto for o dono.");
+        return;
+      }
       if (admins.length <= 1) {
         showErrorToast("Você não pode sair do time enquanto for o único administrador.");
         return;
       }
     }
-
+  
     try {
       await api.delete(`/teams/${teamId}/members/${memberId}`);
       setTeamMembers((prev) => ({
@@ -132,6 +178,7 @@ export const TeamManagement = () => {
       showErrorToast("Erro ao remover o membro. Tente novamente.");
     }
   };
+  
 
   const removeTeam = async (teamId) => {
     if (
@@ -170,9 +217,11 @@ export const TeamManagement = () => {
           />
           <button
             onClick={createTeam}
-            className="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-all"
+            disabled={loading}
+            className={`bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-all ${loading ? "opacity-50 cursor-not-allowed" : ""
+              }`}
           >
-            Criar Time
+            {loading ? "Criando..." : "Criar Time"}
           </button>
         </div>
 
@@ -184,10 +233,13 @@ export const TeamManagement = () => {
             teams.map((team) => (
               <div key={team.id} className="bg-white p-4 rounded-lg shadow-md">
                 <div
-                  className="flex justify-between items-center cursor-pointer"
+                  className="flex justify-between items-center cursor-pointer transition-transform transform hover:scale-105 hover:shadow-lg"
                   onClick={() => toggleTeamExpansion(team.id)}
                 >
-                  <h3 className="text-lg font-bold text-teal-600">{team.name}</h3>
+                  <div>
+                    <h3 className="text-lg font-bold text-teal-600">{team.name}</h3>
+                    <p className="text-sm text-gray-500">Membros: {teamMembers[team.id]?.length || 0}</p>
+                  </div>
                   <span
                     className={`transition-transform transform ${expandedTeamIds.includes(team.id) ? "rotate-180" : ""
                       }`}
@@ -209,74 +261,93 @@ export const TeamManagement = () => {
                   </span>
                 </div>
 
+                {/* Expansão do time */}
                 {expandedTeamIds.includes(team.id) && (
                   <div className="mt-4">
                     {/* Formulário para adicionar membro */}
-                    <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                      <h4 className="text-sm font-bold mb-2">Adicionar Membro</h4>
-                      <input
-                        type="email"
-                        className="border rounded-lg p-2 w-full mb-2"
-                        placeholder="E-mail"
-                        value={newMember.email}
-                        onChange={(e) => setNewMember({ ...newMember, email: e.target.value })}
-                      />
-                      <Dropdown
-                        options={[
-                          { value: "member", label: "Membro" },
-                          { value: "admin", label: "Administrador" },
-                        ]}
-                        value={newMember.role}
-                        onChange={(role) => setNewMember({ ...newMember, role })}
-                        placeholder="Selecione o Papel"
-                      />
-                      <button
-                        onClick={() => addMember(team.id)}
-                        className="bg-teal-600 text-white px-4 py-2 rounded-lg mt-2 hover:bg-teal-700 transition-all"
-                      >
-                        Adicionar
-                      </button>
-                    </div>
+                    {team.role === "admin" || team.role === "owner" ? (
+                      <div className="bg-gray-100 p-4 rounded-lg mb-4">
+                        <h4 className="text-sm font-bold mb-2">Adicionar Membro</h4>
+                        <input
+                          type="email"
+                          className="border rounded-lg p-2 w-full mb-2"
+                          placeholder="E-mail"
+                          value={newMember.email}
+                          onChange={(e) =>
+                            setNewMember({ ...newMember, email: e.target.value })
+                          }
+                        />
+                        <Dropdown
+                          options={[
+                            { value: "member", label: "Membro" },
+                            { value: "admin", label: "Administrador" },
+                          ]}
+                          value={newMember.role}
+                          onChange={(role) => setNewMember({ ...newMember, role })}
+                          placeholder="Selecione o Papel"
+                        />
+                        <button
+                          onClick={() => addMember(team.id)}
+                          disabled={loading}
+                          className={`bg-teal-600 text-white px-4 py-2 rounded-lg mt-2 hover:bg-teal-700 transition-all ${loading ? "opacity-50 cursor-not-allowed" : ""
+                            }`}
+                        >
+                          {loading ? "Adicionando..." : "Adicionar"}
+                        </button>
+                      </div>
+                    ) : (
+                      <p className="text-gray-500">
+                        Você não tem permissão para adicionar membros.
+                      </p>
+                    )}
 
                     {/* Lista de membros */}
                     <div>
                       <h4 className="text-sm font-bold mb-2">Membros</h4>
-                      {teamMembers[team.id]?.map((member) => (
-                        <div
-                          key={member.id}
-                          className="bg-white p-2 rounded-lg shadow-sm flex justify-between items-center mb-2"
-                        >
-                          <div>
-                            <p className="text-sm font-bold">{member.name}</p>
-                            <p className="text-sm text-gray-500">{member.email}</p>
-                          </div>
-                          <button
-                            onClick={() =>
-                              removeMember(
-                                team.id,
-                                member.id,
-                                member.email,
-                                member.email === currentUserEmail
-                              )
-                            }
-                            className={`${member.email === currentUserEmail
-                              ? "text-blue-600 hover:underline"
-                              : "text-red-600 hover:underline"
-                              }`}
+                      {loadingTeams[team.id] ? (
+                        <p>Carregando membros...</p>
+                      ) : teamMembers[team.id]?.length ? (
+                        teamMembers[team.id].map((member) => (
+                          <div
+                            key={member.id}
+                            className="bg-white p-2 rounded-lg shadow-sm flex justify-between items-center mb-2"
                           >
-                            {member.email === currentUserEmail ? "Sair" : "Remover"}
-                          </button>
-                        </div>
-                      ))}
+                            <div>
+                              <p className="text-sm font-bold">{member.name}</p>
+                              <p className="text-sm text-gray-500">{member.email}</p>
+                            </div>
+                            <button
+                              onClick={() =>
+                                removeMember(
+                                  team.id,
+                                  member.id,
+                                  member.email,
+                                  member.email === currentUserEmail
+                                )
+                              }
+                              className={`${member.email === currentUserEmail
+                                ? "text-blue-600 hover:underline"
+                                : "text-red-600 hover:underline"
+                                }`}
+                            >
+                              {member.email === currentUserEmail ? "Sair" : "Remover"}
+                            </button>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-sm text-gray-500">Nenhum membro encontrado.</p>
+                      )}
                     </div>
 
                     {/* Remover Time */}
-                    <button
-                      onClick={() => removeTeam(team.id)}
-                      className="bg-red-600 text-white px-4 py-2 rounded-lg mt-4 hover:bg-red-700 transition-all"
-                    >
-                      Remover Time
-                    </button>
+                    {team.role === "admin" || team.role === "owner" ? (
+                      <button
+                        onClick={() => removeTeam(team.id)}
+                        className="bg-red-600 text-white px-4 py-2 rounded-lg mt-4 hover:bg-red-700 transition-all"
+                      >
+                        Remover Time
+                      </button>
+                    ) : null}
                   </div>
                 )}
               </div>
@@ -286,4 +357,5 @@ export const TeamManagement = () => {
       </div>
     </div>
   );
+
 };

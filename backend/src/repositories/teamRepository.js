@@ -7,32 +7,34 @@ class TeamRepository {
         await TeamMember.create({
             teamId: team.id,
             userId: ownerId,
-            role: "owner",
+            role: "owner", // Garante que o criador seja registrado como dono
         });
     
-        // Registrar log de criação do time
         await this.logAction(ownerId, "create_team", { teamName: name }, team.id);
     
         return team;
     }
+    
     
 
 
 
     async getTeams(userId) {
         return await Team.findAll({
-            attributes: ["id", "name", "createdAt", "updatedAt"], // Inclui os campos necessários da tabela Team
+            attributes: ["id", "name", "createdAt", "updatedAt"],
             include: [
                 {
                     model: TeamMember,
                     as: "members",
-                    attributes: ["id", "role"], // Inclui os campos necessários da associação
-                    where: { userId }, // Filtra pelos times em que o usuário é membro
-                    required: true, // Garante que apenas os times relacionados sejam retornados
+                    attributes: ["userId", "role"],
+                    where: { userId },
+                    required: true,
                 },
             ],
         });
     }
+    
+      
     
     
 
@@ -75,36 +77,30 @@ class TeamRepository {
     async deleteTeam(teamId, userId) {
         // Verifica se o usuário é o dono do time
         const isOwner = await TeamMember.findOne({
-            where: { teamId, userId, role: "owner" },
+          where: { teamId, userId, role: "owner" },
         });
         if (!isOwner) throw new Error("Você não tem permissão para excluir este time.");
-    
-        // Recupera os detalhes do time antes de excluir
+      
         const team = await Team.findByPk(teamId);
         if (!team) throw new Error("Time não encontrado.");
-    
-        // Cria o log de auditoria antes de excluir o time
+      
         await this.logAction(userId, "delete_team", {
-            teamId: team.id,
-            teamName: team.name,
+          teamId: team.id,
+          teamName: team.name,
         }, team.id);
-    
-        // Exclui o time
+      
         await Team.destroy({ where: { id: teamId } });
-    
+      
         return true;
-    }
-
-    
-
-
+      }
+      
 
     async addMemberByEmail(teamId, email, role, adminId) {
         const isAdmin = await TeamMember.findOne({
             where: {
                 teamId,
                 userId: adminId,
-                role: ["admin", "owner"],
+                role: ["admin", "owner"], // Garante que 'owner' também tem permissão
             },
         });
         if (!isAdmin) {
@@ -237,6 +233,32 @@ class TeamRepository {
         });
     }
 
+    async getTeamTransactions(teamId) {
+        return await TeamTransaction.findAll({
+          where: { teamId },
+          attributes: ["id", "description", "amount", "type", "date"],
+        });
+      }
+    
+      async getTeamSummary(teamId) {
+        const transactions = await this.getTeamTransactions(teamId);
+    
+        const summary = transactions.reduce(
+          (acc, transaction) => {
+            if (transaction.type === "income") {
+              acc.totalIncome += parseFloat(transaction.amount);
+            } else {
+              acc.totalExpense += parseFloat(transaction.amount);
+            }
+            return acc;
+          },
+          { totalIncome: 0, totalExpense: 0, transactionCount: transactions.length }
+        );
+    
+        summary.currentBalance = summary.totalIncome - summary.totalExpense;
+    
+        return summary;
+      }
 }
 
 module.exports = new TeamRepository();

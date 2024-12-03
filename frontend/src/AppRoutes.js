@@ -11,11 +11,11 @@ import {
   TeamManagement,
   CategoriesPage,
   TransactionsPage,
-  OverviewPage,
   TransactionsTeamPage,
-  GoalsBudgetsPage,
   AuditLogsPage,
   SettingsPage,
+  TeamGoalsPage,
+  TeamDetailsPage,
 } from "./pages/";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -79,18 +79,18 @@ function AppRoutes() {
         }
       />
       <Route
-        path="/team-management/overview"
+        path="/team-management/team-details"
         element={
           <ProtectedRoute requiredPlan="Premium">
-            <OverviewPage />
+            <TeamDetailsPage />
           </ProtectedRoute>
         }
       />
       <Route
-        path="/team-management/:teamId/overview"
+        path="/team-management/:teamId/team-details"
         element={
           <ProtectedRoute requiredPlan="Premium">
-            <OverviewPage />
+            <TeamDetailsPage />
           </ProtectedRoute>
         }
       />
@@ -103,10 +103,10 @@ function AppRoutes() {
         }
       />
       <Route
-        path="/team-management/:teamId/goals-budgets"
+        path="/team-management/:teamId/team-goals"
         element={
           <ProtectedRoute requiredPlan="Premium">
-            <GoalsBudgetsPage />
+            <TeamGoalsPage />
           </ProtectedRoute>
         }
       />

@@ -6,8 +6,18 @@ class TeamService {
   }
 
   async getTeams(userId) {
-    return await teamRepository.getTeams(userId);
+    const teams = await teamRepository.getTeams(userId);
+  
+    return teams.map((team) => ({
+      id: team.id,
+      name: team.name,
+      role: team.members.find((member) => member.userId === userId)?.role, // Identifica o papel do usuário no time
+      members: team.members.length,
+      createdAt: team.createdAt,
+      updatedAt: team.updatedAt,
+    }));
   }
+  
 
   async getTeamById(teamId, userId) {
     return await teamRepository.getTeamById(teamId, userId);
@@ -38,31 +48,53 @@ class TeamService {
 
 
   async removeMember(teamId, userId, adminId) {
-    return await teamRepository.removeMember(teamId, userId, adminId);
+    const isAdmin = await teamRepository.verifyMembership(teamId, adminId);
+  
+    if (!isAdmin) throw new Error("Sem permissão para remover membros.");
+  
+    const member = await teamRepository.findMember(teamId, userId);
+    if (!member) throw new Error("Membro não encontrado.");
+  
+    // Verifica se é o único administrador
+    const admins = await teamRepository.getAdmins(teamId);
+    if (admins.length <= 1 && member.role === "admin") {
+      throw new Error("Não é possível remover o único administrador do time.");
+    }
+  
+    await teamRepository.removeMember(teamId, userId);
+  
+    // Log de remoção de membro
+    await teamRepository.logAction(adminId, "remove_member", { removedUserId: userId }, teamId);
+  
+    return true;
   }
+  
 
-  async getTeamsOverview(userId) {
-    const teams = await teamRepository.getTeamsByUser(userId);
-
-    return teams.map((team) => ({
-      id: team.id,
-      name: team.name,
-      updatedAt: team.updatedAt, // Inclua o campo updatedAt
-      totalMembers: team.members.length,
-      admins: team.members
-        .filter((member) => member.role === "admin")
-        .map((admin) => ({
-          id: admin.user.id,
-          name: admin.user.name,
-          email: admin.user.email,
-        })),
-    }));
-  }
+  
   async getAuditLogs(userId) {
     return await teamRepository.getAuditLogs(userId);
-}
+  }
 
+  async getTeamTransactions(teamId) {
+    const transactions = await teamRepository.getTeamTransactions(teamId);
 
+    // Calcula o resumo das transações
+    const summary = transactions.reduce(
+      (acc, transaction) => {
+        if (transaction.type === "income") {
+          acc.totalIncome += transaction.amount;
+        } else {
+          acc.totalExpense += transaction.amount;
+        }
+        return acc;
+      },
+      { totalIncome: 0, totalExpense: 0 }
+    );
+
+    summary.currentBalance = summary.totalIncome - summary.totalExpense;
+
+    return { transactions, summary };
+  }
 
 
 

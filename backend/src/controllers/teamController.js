@@ -136,21 +136,6 @@ class TeamController {
         }
     }
 
-    async getTeamsOverview(req, res) {
-        const userId = req.user.id; // ID do usuário autenticado
-
-        try {
-            console.log("Obtendo overview dos times para o usuário:", userId);
-
-            // Chama o serviço para obter os dados
-            const overviewData = await teamService.getTeamsOverview(userId);
-            return res.status(200).json(overviewData);
-        } catch (error) {
-            console.error("Erro ao obter overview dos times:", error.message);
-            return res.status(500).json({ error: "Erro ao obter overview dos times." });
-        }
-    }
-
     async getAuditLogs(req, res) {
         const userId = req.user.id;
     
@@ -162,6 +147,17 @@ class TeamController {
             return res.status(500).json({ error: "Erro ao obter logs de auditoria." });
         }
     }
+    async getTeamTransactions(req, res) {
+        const { teamId } = req.params;
+    
+        try {
+          const { transactions, summary } = await teamService.getTeamTransactions(teamId);
+          return res.status(200).json({ transactions, summary });
+        } catch (error) {
+          console.error("Erro ao carregar transações:", error.message);
+          return res.status(500).json({ error: "Erro ao carregar transações." });
+        }
+      }
 }
 
 module.exports = new TeamController();
