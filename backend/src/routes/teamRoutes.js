@@ -18,7 +18,12 @@ router.get("/:id/members", authenticate, teamController.getMembersByTeam);
 router.post("/:id/members", authenticate, teamController.addMember); // Adicionar membro a um time
 router.delete("/:id/members/:userId", authenticate, teamController.removeMember); // Remover membro de um time
 
-router.get("/:teamId/transactions", authenticate, teamController.getTeamTransactions);
+router.get("/transactions", authenticate, teamController.getTeamTransactions);
+//router.post("/:teamId/transactions", authenticate, teamController.addTeamTransaction);
+//router.get("/:teamId/transactions", authenticate, teamController.getTransactions);
+//router.post("/:teamId/transactions", authenticate, teamController.addTransaction);
+
+
 
 
 module.exports = router;

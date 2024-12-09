@@ -7,7 +7,7 @@ class TeamService {
 
   async getTeams(userId) {
     const teams = await teamRepository.getTeams(userId);
-  
+
     return teams.map((team) => ({
       id: team.id,
       name: team.name,
@@ -17,7 +17,7 @@ class TeamService {
       updatedAt: team.updatedAt,
     }));
   }
-  
+
 
   async getTeamById(teamId, userId) {
     return await teamRepository.getTeamById(teamId, userId);
@@ -48,43 +48,54 @@ class TeamService {
 
 
   async removeMember(teamId, userId, adminId) {
-    const isAdmin = await teamRepository.verifyMembership(teamId, adminId);
-  
-    if (!isAdmin) throw new Error("Sem permissão para remover membros.");
-  
-    const member = await teamRepository.findMember(teamId, userId);
-    if (!member) throw new Error("Membro não encontrado.");
-  
-    // Verifica se é o único administrador
-    const admins = await teamRepository.getAdmins(teamId);
-    if (admins.length <= 1 && member.role === "admin") {
-      throw new Error("Não é possível remover o único administrador do time.");
+    // Verifica se o administrador tem permissão para remover membros
+    const adminMember = await teamRepository.findMember(teamId, adminId);
+    if (!adminMember || (adminMember.role !== "admin" && adminMember.role !== "owner")) {
+      throw new Error("Você não tem permissão para remover membros deste time.");
     }
-  
-    await teamRepository.removeMember(teamId, userId);
-  
-    // Log de remoção de membro
-    await teamRepository.logAction(adminId, "remove_member", { removedUserId: userId }, teamId);
-  
-    return true;
-  }
-  
 
-  
+    // Verifica se o membro a ser removido existe no time
+    const member = await teamRepository.findMember(teamId, userId);
+    if (!member) {
+      throw new Error("Membro não encontrado neste time.");
+    }
+
+    // Impede que o último administrador seja removido
+    if (member.role === "admin") {
+      const adminCount = await TeamMember.count({
+        where: { teamId, role: "admin" },
+      });
+
+      if (adminCount <= 1) {
+        throw new Error("Não é possível remover o último administrador do time.");
+      }
+    }
+
+    return await teamRepository.removeMember(teamId, userId);
+  }
+
+
+
   async getAuditLogs(userId) {
     return await teamRepository.getAuditLogs(userId);
   }
 
-  async getTeamTransactions(teamId) {
+  async getTeamTransactions(teamId, userId) {
+    // Verifica se o usuário pertence ao time antes de buscar as transações
+    const isMember = await teamRepository.verifyMembership(teamId, userId);
+    if (!isMember) {
+      throw new Error("Você não tem permissão para visualizar as transações deste time.");
+    }
+
+    // Busca as transações e calcula o resumo
     const transactions = await teamRepository.getTeamTransactions(teamId);
 
-    // Calcula o resumo das transações
     const summary = transactions.reduce(
       (acc, transaction) => {
         if (transaction.type === "income") {
-          acc.totalIncome += transaction.amount;
+          acc.totalIncome += parseFloat(transaction.amount);
         } else {
-          acc.totalExpense += transaction.amount;
+          acc.totalExpense += parseFloat(transaction.amount);
         }
         return acc;
       },
@@ -96,7 +107,56 @@ class TeamService {
     return { transactions, summary };
   }
 
+  async addTeamTransaction(teamId, transactionData) {
+    // Verifica se o time existe e se o usuário pertence ao time
+    const isMember = await teamRepository.verifyMembership(teamId, transactionData.createdBy);
+    if (!isMember) {
+      throw new Error("Você não tem permissão para adicionar transações neste time.");
+    }
 
+    // Adiciona a transação ao time
+    return await teamRepository.addTeamTransaction(teamId, transactionData);
+  }
+
+  async addTransaction({ teamId, description, amount, type, date, createdBy }) {
+    // Verificar se o usuário pertence ao time
+    const isMember = await teamRepository.verifyMembership(teamId, createdBy);
+    if (!isMember) {
+      throw new Error("Você não tem permissão para adicionar transações a este time.");
+    }
+
+    // Criação da transação
+    return await teamRepository.createTransaction({
+      teamId,
+      description,
+      amount,
+      type,
+      date,
+      createdBy,
+    });
+  }
+
+  // Obter transações e resumo
+  async getTransactions(teamId) {
+    const transactions = await teamRepository.getTeamTransactions(teamId);
+
+    // Calcula o resumo das transações
+    const summary = transactions.reduce(
+      (acc, transaction) => {
+        if (transaction.type === "income") {
+          acc.totalIncome += parseFloat(transaction.amount);
+        } else if (transaction.type === "expense") {
+          acc.totalExpense += parseFloat(transaction.amount);
+        }
+        return acc;
+      },
+      { totalIncome: 0, totalExpense: 0 }
+    );
+
+    summary.currentBalance = summary.totalIncome - summary.totalExpense;
+
+    return { transactions, summary };
+  }
 
 }
 

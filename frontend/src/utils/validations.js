@@ -9,4 +9,3 @@ export const isPositiveNumber = (value) => {
   export const isNonEmptyString = (str) => {
     return typeof str === 'string' && str.trim().length > 0;
   };
-  

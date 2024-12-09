@@ -79,23 +79,7 @@ function AppRoutes() {
         }
       />
       <Route
-        path="/team-management/team-details"
-        element={
-          <ProtectedRoute requiredPlan="Premium">
-            <TeamDetailsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/team-management/:teamId/team-details"
-        element={
-          <ProtectedRoute requiredPlan="Premium">
-            <TeamDetailsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/team-management/:teamId/transactions"
+        path="/team-management/transactions"
         element={
           <ProtectedRoute requiredPlan="Premium">
             <TransactionsTeamPage />
@@ -103,7 +87,16 @@ function AppRoutes() {
         }
       />
       <Route
-        path="/team-management/:teamId/team-goals"
+        path="/team-management/team-details"
+        element={
+          <ProtectedRoute requiredPlan="Premium">
+            <TeamDetailsPage />
+          </ProtectedRoute>
+        }
+      />     
+      
+      <Route
+        path="/team-management/team-goals"
         element={
           <ProtectedRoute requiredPlan="Premium">
             <TeamGoalsPage />
@@ -120,7 +113,7 @@ function AppRoutes() {
       />
 
       <Route
-        path="/team-management/:teamId/settings"
+        path="/team-management/settings"
         element={
           <ProtectedRoute requiredPlan="Premium">
             <SettingsPage />

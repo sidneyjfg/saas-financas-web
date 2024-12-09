@@ -1,56 +1,158 @@
 import React, { useState, useEffect } from "react";
 import api from "../../services/api";
-import { showErrorToast } from "../../utils/toast";
-import { useNavigate } from "react-router-dom";
+//import { useParams } from "react-router-dom";
+import { showErrorToast, showSuccessToast } from "../../utils/toast";
+import { useTeam } from "../../contexts/TeamContext";
 
 export const TransactionsTeamPage = () => {
-  const [teams, setTeams] = useState([]);
+  const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
-
+  const [newTransaction, setNewTransaction] = useState({
+    description: "",
+    amount: "",
+    type: "income",
+    date: new Date().toISOString().split("T")[0],
+  });
+  const { selectedTeam } = useTeam();
+  
   useEffect(() => {
-    const fetchTeams = async () => {
+    console.log("Teste: ",selectedTeam);
+    const fetchTransactions = async () => {
+      if (!selectedTeam?.id) {
+        showErrorToast("Time não selecionado.");
+        return;
+      }
+  
       try {
-        const response = await api.get("/teams");
-        setTeams(response.data);
+        const response = await api.get("/teams/transactions", {
+          headers: {
+            "X-Team-ID": selectedTeam.id, // Envia o ID do time nos headers
+          },
+        });
+        setTransactions(response.data.transactions);
       } catch (error) {
-        console.error("Erro ao carregar equipes:", error);
-        showErrorToast("Erro ao carregar equipes.");
+        console.error("Erro ao carregar transações:", error);
+        showErrorToast("Erro ao carregar transações.");
       } finally {
         setLoading(false);
       }
     };
+  
+    fetchTransactions();
+  }, [selectedTeam]);
+  
 
-    fetchTeams();
-  }, []);
+  const addTransaction = async () => {
+    if (!newTransaction.description || !newTransaction.amount || !newTransaction.date) {
+      showErrorToast("Preencha todos os campos.");
+      return;
+    }
+
+    try {
+      const response = await api.post(`/teams/${selectedTeam}/transactions`, newTransaction);
+      showSuccessToast("Transação adicionada com sucesso!");
+      setTransactions((prev) => [...prev, response.data]);
+      setNewTransaction({ description: "", amount: "", type: "income", date: new Date().toISOString().split("T")[0] });
+    } catch (error) {
+      console.error("Erro ao adicionar transação:", error);
+      showErrorToast("Erro ao adicionar transação.");
+    }
+  };
 
   if (loading) {
-    return <div>Carregando equipes...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-teal-600 animate-spin w-8 h-8 border-4 border-teal-600 border-t-transparent rounded-full"></div>
+      </div>
+    );
   }
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
-      <h1 className="text-3xl font-bold text-teal-600 text-center mb-6">
-        Lista de Equipes
+      <h1 className="text-2xl font-bold text-teal-600 mb-6 text-center">
+        Transações do Time: {selectedTeam?.name}
       </h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {teams.map((team) => (
-          <div
-            key={team.id}
-            className="bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition"
+      {/* Formulário de Nova Transação */}
+      <div className="bg-white p-6 rounded-lg shadow-md mb-8">
+        <h2 className="text-lg font-bold mb-4 text-teal-600">Adicionar Nova Transação</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <input
+            type="text"
+            placeholder="Descrição"
+            value={newTransaction.description}
+            onChange={(e) =>
+              setNewTransaction({ ...newTransaction, description: e.target.value })
+            }
+            className="border rounded-lg p-2 w-full"
+          />
+          <input
+            type="number"
+            placeholder="Valor"
+            value={newTransaction.amount}
+            onChange={(e) =>
+              setNewTransaction({ ...newTransaction, amount: parseFloat(e.target.value) })
+            }
+            className="border rounded-lg p-2 w-full"
+          />
+          <select
+            value={newTransaction.type}
+            onChange={(e) =>
+              setNewTransaction({ ...newTransaction, type: e.target.value })
+            }
+            className="border rounded-lg p-2 w-full"
           >
-            <h2 className="text-xl font-bold text-teal-600">{team.name}</h2>
-            <p>Total de Transações: {team.transactionCount}</p>
-            <p>Saldo Atual: R$ {team.currentBalance}</p>
-            <button
-              onClick={() => navigate(`/team-management/${team.id}/transactions`)}
-              className="mt-4 bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700"
-            >
-              Ver Transações
-            </button>
-          </div>
-        ))}
+            <option value="income">Entrada</option>
+            <option value="expense">Saída</option>
+          </select>
+          <input
+            type="date"
+            value={newTransaction.date}
+            onChange={(e) =>
+              setNewTransaction({ ...newTransaction, date: e.target.value })
+            }
+            className="border rounded-lg p-2 w-full"
+          />
+        </div>
+        <button
+          onClick={addTransaction}
+          className="bg-teal-600 text-white px-4 py-2 rounded-lg mt-4 hover:bg-teal-700"
+        >
+          Adicionar Transação
+        </button>
+      </div>
+
+      {/* Lista de Transações */}
+      <div className="bg-white p-6 rounded-lg shadow-md">
+        <h2 className="text-lg font-bold text-teal-600 mb-4">Transações</h2>
+        {transactions.length === 0 ? (
+          <p className="text-gray-500">Nenhuma transação encontrada.</p>
+        ) : (
+          <ul className="space-y-4">
+            {transactions.map((transaction, index) => (
+              <li
+                key={index}
+                className={`p-4 rounded-lg shadow-sm border ${
+                  transaction.type === "income" ? "border-teal-500" : "border-red-500"
+                }`}
+              >
+                <p className="font-bold text-gray-700">{transaction.description}</p>
+                <p>
+                  Valor:{" "}
+                  <span
+                    className={`font-semibold ${
+                      transaction.type === "income" ? "text-teal-600" : "text-red-600"
+                    }`}
+                  >
+                    R$ {transaction.amount}
+                  </span>
+                </p>
+                <p>Data: {new Date(transaction.date).toLocaleDateString()}</p>
+                <p>Tipo: {transaction.type === "income" ? "Entrada" : "Saída"}</p>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );

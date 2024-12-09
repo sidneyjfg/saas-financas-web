@@ -16,7 +16,7 @@ class TeamController {
 
     async getTeams(req, res) {
         const userId = req.user.id;
-    
+
         try {
             console.log("Obtendo times para o usuário:", userId);
             const teams = await teamService.getTeams(userId);
@@ -27,7 +27,7 @@ class TeamController {
             return res.status(500).json({ error: "Erro ao listar times." });
         }
     }
-    
+
 
     async getTeamById(req, res) {
         const { id } = req.params;
@@ -138,7 +138,7 @@ class TeamController {
 
     async getAuditLogs(req, res) {
         const userId = req.user.id;
-    
+
         try {
             const logs = await teamService.getAuditLogs(userId);
             return res.status(200).json(logs);
@@ -148,16 +148,79 @@ class TeamController {
         }
     }
     async getTeamTransactions(req, res) {
-        const { teamId } = req.params;
-    
+        const teamId = req.headers['x-team-id']; // Lê o ID do time dos headers
+        const userId = req.user.id;
+      
+        if (!teamId) {
+          return res.status(400).json({ error: "ID do time não fornecido." });
+        }
+      
         try {
-          const { transactions, summary } = await teamService.getTeamTransactions(teamId);
+          const { transactions, summary } = await teamService.getTeamTransactions(teamId, userId);
           return res.status(200).json({ transactions, summary });
         } catch (error) {
           console.error("Erro ao carregar transações:", error.message);
-          return res.status(500).json({ error: "Erro ao carregar transações." });
+          return res.status(403).json({ error: "Você não tem permissão para visualizar as transações deste time." });
         }
       }
+      
+    async addTeamTransaction(req, res) {
+        const { teamId } = req.params;
+        const { description, amount, type, date } = req.body;
+        const userId = req.user.id; // Usuário autenticado
+
+        if (!description || !amount || !type || !date) {
+            return res.status(400).json({ error: "Todos os campos são obrigatórios." });
+        }
+
+        try {
+            const transaction = await teamService.addTeamTransaction(teamId, {
+                description,
+                amount,
+                type,
+                date,
+                createdBy: userId,
+            });
+            return res.status(201).json(transaction);
+        } catch (error) {
+            console.error("Erro ao adicionar transação:", error.message);
+            return res.status(500).json({ error: "Erro ao adicionar transação." });
+        }
+    }
+
+    async addTransaction(req, res) {
+        const { teamId } = req.params;
+        const { description, amount, type, date } = req.body;
+        const userId = req.user.id;
+
+        try {
+            const transaction = await teamService.addTransaction({
+                teamId,
+                description,
+                amount,
+                type,
+                date,
+                createdBy: userId,
+            });
+            return res.status(201).json(transaction);
+        } catch (error) {
+            console.error("Erro ao adicionar transação:", error.message);
+            return res.status(500).json({ error: "Erro ao adicionar transação." });
+        }
+    }
+
+    // Listar transações de um time
+    async getTransactions(req, res) {
+        const { teamId } = req.user.id;
+        console.log(teamId);
+        try {
+            const { transactions, summary } = await teamService.getTransactions(teamId);
+            return res.status(200).json({ transactions, summary });
+        } catch (error) {
+            console.error("Erro ao obter transações:", error.message);
+            return res.status(500).json({ error: "Erro ao obter transações." });
+        }
+    }
 }
 
 module.exports = new TeamController();
