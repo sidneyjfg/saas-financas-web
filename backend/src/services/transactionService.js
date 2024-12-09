@@ -5,7 +5,6 @@ const hashFileRepository = require('../repositories/hashFileRepository');
 const { FileHashes } = require('../models');
 const fs = require('fs');
 const csv = require('csv-parser'); // Verifique se a biblioteca `csv-parser` está instalada.
-const { use } = require('../routes/transactionRoutes');
 
 
 class TransactionService {

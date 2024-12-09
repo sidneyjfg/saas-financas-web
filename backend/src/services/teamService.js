@@ -105,7 +105,8 @@ class TeamService {
     summary.currentBalance = summary.totalIncome - summary.totalExpense;
 
     return { transactions, summary };
-  }
+}
+
 
   async addTeamTransaction(teamId, transactionData) {
     // Verifica se o time existe e se o usuário pertence ao time

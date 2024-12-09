@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import api from "../../services/api";
 //import { useParams } from "react-router-dom";
 import { showErrorToast, showSuccessToast } from "../../utils/toast";
@@ -13,16 +14,25 @@ export const TransactionsTeamPage = () => {
     type: "income",
     date: new Date().toISOString().split("T")[0],
   });
-  const { selectedTeam } = useTeam();
+  const location = useLocation();
+  const teamFromState = location.state?.team; // Recupera o time do estado da navegação
+  const { selectedTeam, setSelectedTeam } = useTeam();
   
   useEffect(() => {
-    console.log("Teste: ",selectedTeam);
-    const fetchTransactions = async () => {
-      if (!selectedTeam?.id) {
-        showErrorToast("Time não selecionado.");
-        return;
+      if (!selectedTeam && teamFromState) {
+          setSelectedTeam(teamFromState); // Atualiza o contexto caso não tenha um time selecionado
       }
+  }, [selectedTeam, teamFromState, setSelectedTeam]);
   
+
+
+  useEffect(() => {
+    if (!selectedTeam) {
+      console.log("Nenhum time selecionado.");
+      return;
+    }
+
+    const fetchTransactions = async () => {
       try {
         const response = await api.get("/teams/transactions", {
           headers: {
@@ -30,6 +40,7 @@ export const TransactionsTeamPage = () => {
           },
         });
         setTransactions(response.data.transactions);
+        console.log("Transações carregadas com sucesso");
       } catch (error) {
         console.error("Erro ao carregar transações:", error);
         showErrorToast("Erro ao carregar transações.");
@@ -37,10 +48,10 @@ export const TransactionsTeamPage = () => {
         setLoading(false);
       }
     };
-  
+
     fetchTransactions();
-  }, [selectedTeam]);
-  
+  }, [selectedTeam]); // `selectedTeam` deve estar no array de dependências  
+
 
   const addTransaction = async () => {
     if (!newTransaction.description || !newTransaction.amount || !newTransaction.date) {
@@ -58,6 +69,15 @@ export const TransactionsTeamPage = () => {
       showErrorToast("Erro ao adicionar transação.");
     }
   };
+
+  if (!selectedTeam) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-gray-600">Nenhum time selecionado. Por favor, volte e selecione um time.</p>
+      </div>
+    );
+  }
+
 
   if (loading) {
     return (
@@ -132,17 +152,15 @@ export const TransactionsTeamPage = () => {
             {transactions.map((transaction, index) => (
               <li
                 key={index}
-                className={`p-4 rounded-lg shadow-sm border ${
-                  transaction.type === "income" ? "border-teal-500" : "border-red-500"
-                }`}
+                className={`p-4 rounded-lg shadow-sm border ${transaction.type === "income" ? "border-teal-500" : "border-red-500"
+                  }`}
               >
                 <p className="font-bold text-gray-700">{transaction.description}</p>
                 <p>
                   Valor:{" "}
                   <span
-                    className={`font-semibold ${
-                      transaction.type === "income" ? "text-teal-600" : "text-red-600"
-                    }`}
+                    className={`font-semibold ${transaction.type === "income" ? "text-teal-600" : "text-red-600"
+                      }`}
                   >
                     R$ {transaction.amount}
                   </span>

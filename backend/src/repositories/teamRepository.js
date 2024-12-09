@@ -1,4 +1,4 @@
-const { Team, TeamMember, User, AuditLog } = require("../models");
+const { Team, TeamMember, User, AuditLog, TeamTransaction } = require("../models");
 
 class TeamRepository {
     async createTeam(name, ownerId) {
@@ -15,10 +15,6 @@ class TeamRepository {
         return team;
     }
 
-
-
-
-
     async getTeams(userId) {
         return await Team.findAll({
             attributes: ["id", "name", "createdAt", "updatedAt"],
@@ -33,10 +29,6 @@ class TeamRepository {
             ],
         });
     }
-
-
-
-
 
     async getTeamById(teamId, userId) {
         return await Team.findOne({
@@ -71,8 +63,6 @@ class TeamRepository {
 
         return team;
     }
-
-
 
     async deleteTeam(teamId, userId) {
         // Verifica se o usuário é o dono do time
@@ -150,11 +140,11 @@ class TeamRepository {
     async removeMember(teamId, userId) {
         const member = await TeamMember.findOne({ where: { teamId, userId } });
         if (member) {
-          await member.destroy();
-          return true;
+            await member.destroy();
+            return true;
         }
         return false;
-      }
+    }
 
 
     // Busca os membros do time
@@ -227,23 +217,23 @@ class TeamRepository {
 
     async createTransaction({ teamId, description, amount, type, date, createdBy }) {
         return await TeamTransaction.create({
-          teamId,
-          description,
-          amount,
-          type,
-          date,
-          createdBy,
+            teamId,
+            description,
+            amount,
+            type,
+            date,
+            createdBy,
         });
-      }
-    
-      // Obter transações de um time
-      async getTeamTransactions(teamId) {
+    }
+
+    // Obter transações de um time
+    async getTeamTransactions(teamId) {
         return await TeamTransaction.findAll({
-          where: { teamId },
-          attributes: ["id", "description", "amount", "type", "date", "createdBy"],
-          order: [["date", "DESC"]],
+            where: { teamId },
+            attributes: ["id", "description", "amount", "type", "date", "createdBy"],
+            order: [["date", "DESC"]],
         });
-      }
+    }
 
     async addTeamTransaction(teamId, transactionData) {
         return await TeamTransaction.create({
@@ -274,16 +264,16 @@ class TeamRepository {
 
     async findMember(teamId, userId) {
         return await TeamMember.findOne({
-          where: { teamId, userId },
-          include: [
-            {
-              model: User,
-              as: "user", // Certifique-se de que o alias "user" está configurado na associação
-              attributes: ["id", "name", "email"],
-            },
-          ],
+            where: { teamId, userId },
+            include: [
+                {
+                    model: User,
+                    as: "user", // Certifique-se de que o alias "user" está configurado na associação
+                    attributes: ["id", "name", "email"],
+                },
+            ],
         });
-      }
+    }
 }
 
 module.exports = new TeamRepository();

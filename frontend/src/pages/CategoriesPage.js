@@ -33,7 +33,9 @@ export const CategoriesPage = () => {
         setCategories(
           response.data.map((category) => ({
             ...category,
-            keywords: category.keywords ? category.keywords.join(", ") : "",
+            keywords: Array.isArray(category.keywords)
+              ? category.keywords.join(", ")
+              : category.keywords || "", // Manter a string original ou vazio
           }))
         );
       } catch (error) {
@@ -47,57 +49,69 @@ export const CategoriesPage = () => {
   }, [userPlan]);
 
   // Create or Update Category
+  // Create or Update Category
   const handleSaveCategory = async () => {
     if (!newCategory.name.trim()) {
       showWarningToast("O nome da categoria é obrigatório.");
       return;
     }
-  
+
     // Garante que keywords será um array válido
     const keywordsArray = newCategory.keywords
       ? newCategory.keywords
-          .split(",")
-          .map((keyword) => keyword.trim())
-          .filter((keyword) => keyword) // Remove strings vazias
+        .split(",")
+        .map((keyword) => keyword.trim())
+        .filter((keyword) => keyword) // Remove strings vazias
       : [];
-  
+
     const categoryData = {
       name: newCategory.name,
       color: newCategory.color || "#000000", // Define cor padrão
       keywords: keywordsArray, // Envia o array de keywords diretamente
     };
-  
+
     try {
       if (editingCategory) {
         // Atualizar categoria existente
         await api.put(`/categories/${editingCategory.id}`, categoryData);
         showSuccessToast("Categoria atualizada com sucesso!");
+
+        // Atualizar a categoria no estado local
+        setCategories((prevCategories) =>
+          prevCategories.map((category) =>
+            category.id === editingCategory.id
+              ? { ...category, ...categoryData, keywords: keywordsArray.join(", ") }
+              : category
+          )
+        );
       } else {
         // Criar nova categoria
-        await api.post("/categories", categoryData);
+        const response = await api.post("/categories", categoryData);
         showSuccessToast("Categoria criada com sucesso!");
+
+        // Adicionar a nova categoria ao estado local
+        setCategories((prevCategories) => [
+          ...prevCategories,
+          {
+            ...categoryData,
+            id: response.data.id, // Use o ID retornado pela API
+            keywords: keywordsArray.join(", "),
+          },
+        ]);
       }
-  
-      // Atualizar lista de categorias
-      const endpoint =
-        userPlan === "Basic" ? "/categories/basic" : "/categories/premium";
-      const response = await api.get(endpoint);
-      setCategories(
-        response.data.map((category) => ({
-          ...category,
-          keywords: category.keywords ? category.keywords.join(", ") : "",
-        }))
-      );
-  
+
       // Resetar o formulário
       setNewCategory({ name: "", color: "#000000", keywords: "" });
       setEditingCategory(null);
     } catch (error) {
-      console.error("Erro ao salvar categoria:", error);
-      showErrorToast("Erro ao salvar categoria.");
+      console.error("Erro ao salvar categoria:", error.response || error.message);
+      showErrorToast(
+        error.response?.data?.message || "Erro inesperado ao salvar categoria."
+      );
     }
   };
-  
+
+
 
   const handleEditCategory = (category) => {
     setNewCategory({

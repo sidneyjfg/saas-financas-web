@@ -150,20 +150,21 @@ class TeamController {
     async getTeamTransactions(req, res) {
         const teamId = req.headers['x-team-id']; // Lê o ID do time dos headers
         const userId = req.user.id;
-      
+        console.log("TeamID: ",teamId);
+        console.log("suerID: ",userId);
         if (!teamId) {
-          return res.status(400).json({ error: "ID do time não fornecido." });
+            return res.status(400).json({ error: "ID do time não fornecido." });
         }
-      
+
         try {
-          const { transactions, summary } = await teamService.getTeamTransactions(teamId, userId);
-          return res.status(200).json({ transactions, summary });
+            const { transactions, summary } = await teamService.getTeamTransactions(teamId, userId);
+            return res.status(200).json({ transactions, summary });
         } catch (error) {
-          console.error("Erro ao carregar transações:", error.message);
-          return res.status(403).json({ error: "Você não tem permissão para visualizar as transações deste time." });
+            console.error("Erro ao carregar transações:", error.message);
+            return res.status(403).json({ error: "Você não tem permissão para visualizar as transações deste time." });
         }
-      }
-      
+    }
+
     async addTeamTransaction(req, res) {
         const { teamId } = req.params;
         const { description, amount, type, date } = req.body;

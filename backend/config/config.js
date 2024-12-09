@@ -3,7 +3,7 @@ require('dotenv').config(); // Importa variáveis de ambiente do .env
 module.exports = {
   development: {
     username: process.env.DB_USERNAME || 'finUser',
-    password: process.env.DB_PASSWORD || 'Fg01032003!',
+    password: process.env.DB_PASSWORD || '',
     database: process.env.DB_DATABASE || 'fincontrol',
     host: process.env.DB_HOST || '127.0.0.1',
     port: process.env.DB_PORT || 3306,

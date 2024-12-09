@@ -155,7 +155,7 @@ export const TeamManagement = () => {
   const handleViewTransactions = (team) => {
     setSelectedTeam(team); // Armazena o time no contexto
     console.log(team);
-    navigate("/team-management/transactions"); // Redireciona para a página de transações
+    navigate("/team-management/transactions", { state: { team } }); // Passa o time no estado da navegação
   };
 
   const openDetailsModal = (team) => {
