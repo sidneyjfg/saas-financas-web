@@ -5,11 +5,15 @@ module.exports = (sequelize, DataTypes) => {
   class Team extends Model {
     static associate(models) {
       // Um time pode ter muitos membros
-      Team.hasMany(models.TeamMember, {
-        foreignKey: 'teamId',
-        as: 'members',
-      });
+      Team.hasMany(models.TeamMember, { foreignKey: 'teamId', as: 'members' });
+    
+      // Um time pode ter muitas metas
+      Team.hasMany(models.TeamGoal, { foreignKey: 'teamId', as: 'goals' });
+    
+      // Um time pode ter muitas categorias
+      Team.hasMany(models.TeamCategory, { foreignKey: 'teamId', as: 'categories' });
     }
+    
   }
 
   Team.init(

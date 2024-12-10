@@ -49,7 +49,7 @@ class UserService {
     }
 
     const token = generateToken(
-      { id: user.id, email: user.email, name: user.name, plan: plan.name },
+      { id: user.id, email: user.email, name: user.name, plan: plan.name, teamId:user.teamId },
       "1h"
     );
 
@@ -60,6 +60,7 @@ class UserService {
         name: user.name,
         email: user.email,
         plan: plan.name,
+        teamId: user.teamId,
       },
     };
   }

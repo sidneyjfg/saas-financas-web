@@ -55,20 +55,25 @@ export const TransactionsTeamPage = () => {
 
   const addTransaction = async () => {
     if (!newTransaction.description || !newTransaction.amount || !newTransaction.date) {
-      showErrorToast("Preencha todos os campos.");
-      return;
+        showErrorToast("Preencha todos os campos.");
+        return;
     }
 
     try {
-      const response = await api.post(`/teams/${selectedTeam}/transactions`, newTransaction);
-      showSuccessToast("Transação adicionada com sucesso!");
-      setTransactions((prev) => [...prev, response.data]);
-      setNewTransaction({ description: "", amount: "", type: "income", date: new Date().toISOString().split("T")[0] });
+        const response = await api.post("/teams/transactions", newTransaction, {
+            headers: {
+                "X-Team-ID": selectedTeam.id, // Envia o ID do time no cabeçalho
+            },
+        });
+        showSuccessToast("Transação adicionada com sucesso!");
+        setTransactions((prev) => [...prev, response.data]);
+        setNewTransaction({ description: "", amount: "", type: "income", date: new Date().toISOString().split("T")[0] });
     } catch (error) {
-      console.error("Erro ao adicionar transação:", error);
-      showErrorToast("Erro ao adicionar transação.");
+        console.error("Erro ao adicionar transação:", error);
+        showErrorToast("Erro ao adicionar transação.");
     }
-  };
+};
+
 
   if (!selectedTeam) {
     return (

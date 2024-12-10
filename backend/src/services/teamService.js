@@ -5,14 +5,15 @@ class TeamService {
     return await teamRepository.createTeam(name, ownerId);
   }
 
+
   async getTeams(userId) {
     const teams = await teamRepository.getTeams(userId);
 
     return teams.map((team) => ({
       id: team.id,
       name: team.name,
-      role: team.members.find((member) => member.userId === userId)?.role, // Identifica o papel do usuário no time
-      members: team.members.length,
+      role: team.members?.find((member) => member.userId === userId)?.role || null, // Verifica se members está definido
+      members: team.members?.length || 0, // Verifica se members está definido
       createdAt: team.createdAt,
       updatedAt: team.updatedAt,
     }));
@@ -32,19 +33,22 @@ class TeamService {
   }
 
   async getMembersByTeam(teamId, userId) {
-    // Verifica se o usuário pertence ao time
+    console.log("Serviço - Verificando membros do time:", { teamId, userId });
+
     const isMember = await teamRepository.verifyMembership(teamId, userId);
     if (!isMember) {
       throw new Error("Você não tem permissão para visualizar os membros deste time.");
     }
 
-    // Busca os membros do time
     return await teamRepository.getMembersByTeam(teamId);
   }
+
+
 
   async addMemberByEmail(teamId, email, role, adminId) {
     return await teamRepository.addMemberByEmail(teamId, email, role, adminId);
   }
+
 
 
   async removeMember(teamId, userId, adminId) {
@@ -105,7 +109,7 @@ class TeamService {
     summary.currentBalance = summary.totalIncome - summary.totalExpense;
 
     return { transactions, summary };
-}
+  }
 
 
   async addTeamTransaction(teamId, transactionData) {
@@ -158,6 +162,17 @@ class TeamService {
 
     return { transactions, summary };
   }
+  async removeSelfFromTeam(teamId, userId) {
+    // Verifica se o usuário é membro do time
+    const isMember = await teamRepository.verifyMembership(teamId, userId);
+    if (!isMember) {
+      throw new Error("Você não pertence a este time.");
+    }
+
+    // Remove o membro do time
+    return await teamRepository.removeMember(teamId, userId);
+  }
+
 
 }
 

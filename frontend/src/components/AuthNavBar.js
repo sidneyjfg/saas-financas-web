@@ -88,7 +88,7 @@ const AuthNavbar = () => {
             >
               <li>
                 <NavLink
-                  to="/team-management/:teamId/goals-budgets"
+                  to="/team-management/team-goals"
                   className="block px-4 py-2 text-sm text-gray-600 hover:bg-teal-100 hover:text-teal-600"
                 >
                   Goals & Budgets
@@ -104,7 +104,7 @@ const AuthNavbar = () => {
               </li>
               <li>
                 <NavLink
-                  to="/team-management/:teamId/settings"
+                  to="/team-management/settings"
                   className="block px-4 py-2 text-sm text-gray-600 hover:bg-teal-100 hover:text-teal-600"
                 >
                   Settings

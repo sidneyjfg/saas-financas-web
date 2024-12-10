@@ -33,6 +33,14 @@ module.exports = (sequelize, DataTypes) => {
           key: 'id',
         },
       },
+      teamId: {
+        type: DataTypes.INTEGER,
+        allowNull: true, // Permite valores nulos para usuários sem time
+        references: {
+          model: "teams",
+          key: "id",
+        },
+      },
     },
     {
       sequelize,

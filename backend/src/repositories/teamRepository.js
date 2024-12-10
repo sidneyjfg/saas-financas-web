@@ -4,19 +4,31 @@ class TeamRepository {
     async createTeam(name, ownerId) {
         const team = await Team.create({ name });
 
+        // Registra o criador como dono do time
         await TeamMember.create({
             teamId: team.id,
             userId: ownerId,
-            role: "owner", // Garante que o criador seja registrado como dono
+            role: "owner", // Garante que o criador seja o dono
         });
 
-        await this.logAction(ownerId, "create_team", { teamName: name }, team.id);
 
+        // Verifica se este é o primeiro time do usuário
+        const memberCount = await TeamMember.count({ where: { userId: ownerId } });
+        if (memberCount === 1) {
+            await User.update(
+                { teamId: team.id },
+                { where: { id: ownerId } }
+            );
+        }
+
+        await this.logAction(ownerId, "create_team", { teamName: name }, team.id);
         return team;
     }
 
+
+
     async getTeams(userId) {
-        return await Team.findAll({
+        const teams = await Team.findAll({
             attributes: ["id", "name", "createdAt", "updatedAt"],
             include: [
                 {
@@ -24,11 +36,20 @@ class TeamRepository {
                     as: "members",
                     attributes: ["userId", "role"],
                     where: { userId },
-                    required: true,
                 },
             ],
         });
+
+        return teams.map((team) => ({
+            id: team.id,
+            name: team.name,
+            role: team.members[0].role, // Role do usuário logado
+            membersCount: team.members.length,
+            createdAt: team.createdAt,
+            updatedAt: team.updatedAt,
+        }));
     }
+
 
     async getTeamById(teamId, userId) {
         return await Team.findOne({
@@ -87,11 +108,7 @@ class TeamRepository {
 
     async addMemberByEmail(teamId, email, role, adminId) {
         const isAdmin = await TeamMember.findOne({
-            where: {
-                teamId,
-                userId: adminId,
-                role: ["admin", "owner"], // Garante que 'owner' também tem permissão
-            },
+            where: { teamId, userId: adminId, role: ["admin", "owner"] },
         });
         if (!isAdmin) {
             throw new Error("Você não tem permissão para adicionar membros a este time.");
@@ -102,72 +119,84 @@ class TeamRepository {
             throw new Error("Usuário não encontrado.");
         }
 
-        const existingMember = await TeamMember.findOne({
-            where: { teamId, userId: user.id },
-        });
+        const existingMember = await TeamMember.findOne({ where: { teamId, userId: user.id } });
         if (existingMember) {
             throw new Error("Usuário já é membro deste time.");
         }
 
-        const newMember = await TeamMember.create({
-            teamId,
-            userId: user.id,
-            role,
-        });
+        const newMember = await TeamMember.create({ teamId, userId: user.id, role });
 
-        // Registrar log de adição de membro
-        await this.logAction(adminId, "add_member", {
-            memberId: user.id,
-            memberEmail: email,
-            role,
-        }, teamId);
+        // Atualiza o teamId no usuário
+        const memberCount = await TeamMember.count({ where: { userId: user.id } });
+        if (memberCount === 1) {
+            await User.update(
+                { teamId },
+                { where: { id: user.id } }
+            );
+        }
 
-        return {
-            id: newMember.id,
-            name: user.name,
-            email: user.email,
-            role: newMember.role,
-        };
+        return { id: newMember.id, name: user.name, email: user.email, role: newMember.role };
     }
+
+
 
     async verifyMembership(teamId, userId) {
         const member = await TeamMember.findOne({
             where: { teamId, userId },
         });
-        return !!member; // Retorna true se o usuário for membro, false caso contrário
+        return !!member;
     }
 
+
+
     async removeMember(teamId, userId) {
+        // Verifica se o membro existe no time
         const member = await TeamMember.findOne({ where: { teamId, userId } });
-        if (member) {
-            await member.destroy();
-            return true;
+        if (!member) {
+            throw new Error("Membro não encontrado no time.");
         }
-        return false;
+    
+        // Remove o membro
+        await member.destroy();
+    
+        // Se o usuário não pertence a outros times, atualize o `teamId` no modelo `User`
+        const remainingTeams = await TeamMember.count({ where: { userId } });
+        if (remainingTeams === 0) {
+            await User.update(
+                { teamId: null },
+                { where: { id: userId } }
+            );
+        }
+    
+        return true;
     }
+    
 
 
     // Busca os membros do time
     async getMembersByTeam(teamId) {
+        console.log("Repositório - Selecionando membros do time:", teamId);
+
         const members = await TeamMember.findAll({
             where: { teamId },
             include: [
                 {
                     model: User,
-                    as: "user", // Alias definido na associação
-                    attributes: ["id", "name", "email"], // Seleciona apenas os campos necessários
+                    as: "user",
+                    attributes: ["id", "name", "email"],
                 },
             ],
         });
 
-        // Retorna os membros formatados
+        console.log("Membros encontrados:", members);
         return members.map((member) => ({
-            id: member.user.id, // ID do usuário
-            name: member.user.name, // Nome do usuário
-            email: member.user.email, // E-mail do usuário
-            role: member.role, // Papel no time
+            id: member.user.id,
+            name: member.user.name,
+            email: member.user.email,
+            role: member.role,
         }));
     }
+
     async getTeamsByUser(userId) {
         return await Team.findAll({
             attributes: ["id", "name", "updatedAt"], // Inclui o campo updatedAt
@@ -274,6 +303,15 @@ class TeamRepository {
             ],
         });
     }
+    async countAdmins(teamId) {
+        return await TeamMember.count({
+            where: {
+                teamId,
+                role: "admin", // Filtra apenas admins
+            },
+        });
+    }
+    
 }
 
 module.exports = new TeamRepository();

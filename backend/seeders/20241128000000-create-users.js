@@ -23,6 +23,14 @@ module.exports = {
         createdAt: new Date(),
         updatedAt: new Date(),
       },
+      {
+        name: 'Premium 2',
+        email: 'premium2@example.com',
+        password: hashedPassword,
+        planId: 2, // Substitua por um ID válido da tabela 'plans'
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
     ]);
   },
 

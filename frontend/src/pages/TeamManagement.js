@@ -15,40 +15,32 @@ export const TeamManagement = () => {
   const [teamMembers, setTeamMembers] = useState({});
   const [expandedTeamIds, setExpandedTeamIds] = useState([]);
   const [newMember, setNewMember] = useState({ email: "", role: "member" });
-  const [currentUserEmail, setCurrentUserEmail] = useState([]);
+  const [currentUser, setCurrentUser] = useState({ email: "", role: "" });
   const navigate = useNavigate();
 
-  const fetchCurrentUser = async () => {
-    try {
-      const response = await api.get("/users/me"); // Endpoint para obter o usuário atual
-      const email = response.data.email;
-
-      return email;
-    } catch (error) {
-      console.error("Erro ao obter o usuário logado:", error);
-    }
-  };
-
   useEffect(() => {
-    const fetchTeams = async () => {
+    const fetchTeamsAndUser = async () => {
       try {
-        const response = await api.get("/teams");
-        setTeams(response.data);
+        // Obter o e-mail e a role do usuário atual
+        const userResponse = await api.get("/users/me");
+        setCurrentUser({
+          email: userResponse.data.email,
+          teamId: userResponse.data.teamId,
+          role: userResponse.data.role // Certifique-se de que a API retorna a role
+        });
+        console.log(userResponse.data);
+        // Carregar os times
+        const teamsResponse = await api.get("/teams");
+        setTeams(teamsResponse.data);
       } catch (error) {
-        console.error("Erro ao carregar equipes:", error);
-        showErrorToast("Erro ao carregar equipes.");
+        console.error("Erro ao carregar dados:", error);
+        showErrorToast("Erro ao carregar dados.");
       } finally {
         setLoading(false);
       }
     };
-    const loadUser = async () => {
-      const email = await fetchCurrentUser();
-      if (email) {
-        setCurrentUserEmail(email); // Use o setter corretamente
-      }
-    };
-    loadUser();
-    fetchTeams();
+
+    fetchTeamsAndUser();
   }, []);
 
   const handleCreateTeam = async () => {
@@ -74,26 +66,53 @@ export const TeamManagement = () => {
       setExpandedTeamIds(expandedTeamIds.filter((id) => id !== teamId));
     } else {
       setExpandedTeamIds([...expandedTeamIds, teamId]);
-
       try {
-        const response = await api.get(`/teams/${teamId}/members`);
-        setTeamMembers((prev) => ({ ...prev, [teamId]: response.data }));
+        const response = await api.get(`/teams/members`, {
+          headers: {
+            'x-team-id': teamId,
+          },
+        });
+
+        const updatedMembers = response.data.map((member) => {
+          // Adiciona a lógica para controle de permissões
+          return {
+            ...member,
+            canRemove: currentUser.role === "admin" || currentUser.role === "owner", // Define quem pode remover
+            canLeave: member.email === currentUser.email, // Define se o usuário pode sair
+          };
+        });
+
+        setTeamMembers((prev) => ({ ...prev, [teamId]: updatedMembers }));
         showInfoToast("Membros carregados com sucesso!");
       } catch (error) {
-        console.error("Erro ao carregar membros do time:", error);
+        console.error("Erro ao carregar membros:", error.response?.data || error);
         showErrorToast("Erro ao carregar os membros do time.");
       }
     }
   };
 
   const addMember = async (teamId) => {
+    if (currentUser.role !== "admin" && currentUser.role !== "owner") {
+      showErrorToast("Apenas administradores podem adicionar membros.");
+      return;
+    }
+
     if (!newMember.email || !newMember.role) {
       showErrorToast("Preencha os campos de e-mail e papel corretamente.");
       return;
     }
 
     try {
-      const response = await api.post(`/teams/${teamId}/members`, newMember);
+      const response = await api.post(
+        `/teams/members`, // Endpoint sem o teamId na URL
+        newMember, // Corpo da requisição
+        {
+          headers: {
+            "x-team-id": teamId, // Passa o teamId pelo header
+          },
+        }
+      );
+
       setTeamMembers((prev) => ({
         ...prev,
         [teamId]: [...(prev[teamId] || []), response.data],
@@ -101,40 +120,64 @@ export const TeamManagement = () => {
       setNewMember({ email: "", role: "member" });
       showSuccessToast("Membro adicionado com sucesso!");
     } catch (error) {
-      console.error("Erro ao adicionar membro:", error);
-      showErrorToast("Erro ao adicionar o membro.");
+      const errorMessage = error.response?.data?.error || "Erro desconhecido.";
+      console.error(`Erro ao adicionar membro: ${errorMessage}`);
+      showErrorToast(`Erro ao adicionar o membro.\n ${errorMessage}`);
     }
   };
+
 
   const removeMember = async (teamId, memberId, isCurrentUser) => {
     const currentTeamMembers = teamMembers[teamId] || [];
     const admins = currentTeamMembers.filter((member) => member.role === "admin");
 
-    if (isCurrentUser) {
-      if (admins.length <= 1) {
-        showErrorToast(
-          "Você não pode sair do time enquanto for o único administrador."
-        );
-        return;
-      }
+    // Verifica se o usuário é o único administrador e tenta sair
+    if (isCurrentUser && currentUser.role !== 'member' && admins.length <= 1) {
+      showErrorToast("Você não pode sair enquanto for o único administrador.");
+      return;
     }
 
     try {
-      await api.delete(`/teams/${teamId}/members/${memberId}`);
+      // Faz a requisição para remover o membro, enviando o teamId no cabeçalho
+      await api.delete(`/teams/members/${memberId}`, {
+        headers: {
+          'x-team-id': teamId, // Envia o teamId como um cabeçalho
+        },
+      });
+
+      // Atualiza o estado local removendo o membro
       setTeamMembers((prev) => ({
         ...prev,
         [teamId]: prev[teamId].filter((member) => member.id !== memberId),
       }));
 
+      // Caso o membro removido seja o próprio usuário
       if (isCurrentUser) {
-        setTeams((prev) => prev.filter((team) => team.id !== teamId)); // Remove o time da lista se o usuário sair
+        setTeams((prev) => prev.filter((team) => team.id !== teamId)); // Remove o time da lista
         showSuccessToast("Você saiu do time com sucesso!");
       } else {
         showSuccessToast("Membro removido com sucesso!");
       }
     } catch (error) {
-      console.error("Erro ao remover membro:", error);
-      showErrorToast("Erro ao remover o membro. Tente novamente.");
+      console.error("Erro ao remover membro:", error.response?.data || error);
+      showErrorToast("Erro ao remover o membro.");
+    }
+  };
+
+  const leaveTeam = async (teamId) => {
+    try {
+      await api.delete("/teams/leave", {
+        headers: {
+          'x-team-id': teamId,
+        },
+      });
+
+      setTeams((prev) => prev.filter((team) => team.id !== teamId)); // Remove o time da lista
+      showSuccessToast("Você saiu do time com sucesso!");
+    } catch (error) {
+      const errorMessage = error.response?.data?.error || "Erro ao sair do time.";
+      console.error("Erro ao sair do time:", errorMessage);
+      showErrorToast(errorMessage);
     }
   };
 
@@ -209,9 +252,8 @@ export const TeamManagement = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {teams.map((team) => (
           <div
-            key={team.id}
-            className={`bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition ${expandedTeamIds.includes(team.id) ? "ring-2 ring-teal-600" : ""
-              }`}
+            key={team.id} // Use o ID do time como chave única
+            className={`bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition ${expandedTeamIds.includes(team.id) ? "ring-2 ring-teal-600" : ""}`}
           >
             {/* Cabeçalho do Card */}
             <div
@@ -320,27 +362,29 @@ export const TeamManagement = () => {
                 <ul className="space-y-2">
                   {teamMembers[team.id]?.map((member) => (
                     <li
-                      key={member.id}
+                      key={member.id} // Use o ID do membro como chave única
                       className="flex justify-between items-center text-gray-600"
                     >
                       <span>
                         {member.email} ({member.role})
                       </span>
-                      {member.email === currentUserEmail ? (
+                      {member.email === currentUser.email ? (
+                        // Botão para o próprio usuário sair do time
                         <button
-                          onClick={() => removeMember(team.id, member.id, true)}
+                          onClick={() => leaveTeam(team.id)}
                           className="text-blue-600 hover:underline"
                         >
                           Sair
                         </button>
-                      ) : (
+                      ) : currentUser.role === "admin" || currentUser.role === "owner" ? (
+                        // Apenas administradores ou donos podem remover outros membros
                         <button
                           onClick={() => removeMember(team.id, member.id, false)}
                           className="text-red-600 hover:underline"
                         >
                           Remover
                         </button>
-                      )}
+                      ) : null}
                     </li>
                   ))}
                 </ul>

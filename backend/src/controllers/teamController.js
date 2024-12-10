@@ -1,32 +1,33 @@
 const teamService = require("../services/teamService");
-
+const teamRepository = require("../repositories/teamRepository");
 class TeamController {
     async createTeam(req, res) {
         const { name } = req.body;
-        const ownerId = req.user.id; // Usuário autenticado é o dono
+        const ownerId = req.user.id; // Usuário autenticado
 
         try {
             const team = await teamService.createTeam(name, ownerId);
-            return res.status(201).json(team);
+            return res.status(201).json({ teamId: team.id, name: team.name });
         } catch (error) {
             console.error("Erro ao criar time:", error.message);
             return res.status(500).json({ error: "Erro ao criar time." });
         }
     }
 
+
+
     async getTeams(req, res) {
         const userId = req.user.id;
 
         try {
-            console.log("Obtendo times para o usuário:", userId);
             const teams = await teamService.getTeams(userId);
-            console.log("Times encontrados:", teams);
             return res.status(200).json(teams);
         } catch (error) {
             console.error("Erro ao listar times:", error.message);
             return res.status(500).json({ error: "Erro ao listar times." });
         }
     }
+
 
 
     async getTeamById(req, res) {
@@ -76,41 +77,32 @@ class TeamController {
     }
 
     async addMember(req, res) {
-        const { id: teamId } = req.params; // ID do time
-        const { email, role } = req.body; // Recebe o email e o role
-        const adminId = req.user.id; // ID do usuário logado
+        const teamId = req.headers['x-team-id']; // Obtém o teamId dos headers
+        const { email, role } = req.body;
+        const adminId = req.user.id; // Usuário autenticado
+
+        if (!teamId) {
+            return res.status(400).json({ error: "ID do time não fornecido." });
+        }
 
         if (!email || !role) {
             return res.status(400).json({ error: "Os campos 'email' e 'role' são obrigatórios." });
         }
 
         try {
-            // Chama o serviço para adicionar o membro
             const member = await teamService.addMemberByEmail(teamId, email, role, adminId);
-
             return res.status(201).json(member);
         } catch (error) {
             console.error("Erro ao adicionar membro:", error.message);
-
-            if (error.message.includes("Você não tem permissão")) {
-                return res.status(403).json({ error: error.message });
-            } else if (error.message.includes("Usuário não encontrado")) {
-                return res.status(404).json({ error: error.message });
-            } else if (error.message.includes("Usuário já é membro")) {
-                return res.status(400).json({ error: error.message });
-            }
-
-            return res.status(500).json({ error: "Erro ao adicionar membro." });
+            return res.status(500).json({ error: error.message });
         }
     }
 
-
-
-
-
     async removeMember(req, res) {
-        const { id: teamId, userId } = req.params;
-
+        console.log("PArams: ",req.params);
+        const { userId } = req.params;
+        const teamId = req.headers['x-team-id']; // Obtém o teamId dos headers
+        console.log(userId,teamId, req.user.id);
         try {
             const removed = await teamService.removeMember(teamId, userId, req.user.id);
             if (!removed) {
@@ -122,19 +114,29 @@ class TeamController {
             return res.status(500).json({ error: "Erro ao remover membro." });
         }
     }
+
     async getMembersByTeam(req, res) {
-        const { id: teamId } = req.params; // ID do time
-        const userId = req.user.id; // ID do usuário autenticado
+        const teamId = req.headers['x-team-id'];
+        const userId = req.user.id;
+
+        console.log("TeamID recebido:", teamId);
+        console.log("UserID autenticado:", userId);
+
+        if (!teamId) {
+            return res.status(400).json({ error: "ID do time não fornecido." });
+        }
 
         try {
-            // Chama o serviço para buscar os membros do time
             const members = await teamService.getMembersByTeam(teamId, userId);
             return res.status(200).json(members);
         } catch (error) {
             console.error("Erro ao listar membros do time:", error.message);
-            return res.status(500).json({ error: "Erro ao listar membros do time." });
+            return res.status(403).json({ error: "Você não tem permissão para visualizar os membros deste time." });
         }
     }
+
+
+
 
     async getAuditLogs(req, res) {
         const userId = req.user.id;
@@ -150,8 +152,8 @@ class TeamController {
     async getTeamTransactions(req, res) {
         const teamId = req.headers['x-team-id']; // Lê o ID do time dos headers
         const userId = req.user.id;
-        console.log("TeamID: ",teamId);
-        console.log("suerID: ",userId);
+        console.log("TeamID: ", teamId);
+        console.log("suerID: ", userId);
         if (!teamId) {
             return res.status(400).json({ error: "ID do time não fornecido." });
         }
@@ -166,9 +168,13 @@ class TeamController {
     }
 
     async addTeamTransaction(req, res) {
-        const { teamId } = req.params;
+        const teamId = req.headers["x-team-id"]; // Lê o ID do time do cabeçalho
         const { description, amount, type, date } = req.body;
-        const userId = req.user.id; // Usuário autenticado
+        const userId = req.user.id;
+
+        if (!teamId) {
+            return res.status(400).json({ error: "ID do time não fornecido." });
+        }
 
         if (!description || !amount || !type || !date) {
             return res.status(400).json({ error: "Todos os campos são obrigatórios." });
@@ -188,6 +194,7 @@ class TeamController {
             return res.status(500).json({ error: "Erro ao adicionar transação." });
         }
     }
+
 
     async addTransaction(req, res) {
         const { teamId } = req.params;
@@ -222,6 +229,43 @@ class TeamController {
             return res.status(500).json({ error: "Erro ao obter transações." });
         }
     }
+    async leaveTeam(req, res) {
+        const userId = req.user.id; // ID do usuário autenticado
+        const teamId = req.headers['x-team-id']; // Team ID passado no header
+
+        try {
+            // Verificar se o usuário é membro do time
+            const member = await teamRepository.findMember(teamId, userId);
+            if (!member) {
+                return res.status(404).json({ error: "Você não pertence a este time." });
+            }
+
+            // Verifica se o usuário é admin/owner
+            if (member.role === "admin" || member.role === "owner") {
+                const adminCount = await teamRepository.countAdmins(teamId);
+
+                // Impede a saída se for o único admin
+                if (adminCount <= 1) {
+                    return res.status(400).json({
+                        error: "Você não pode sair do time enquanto for o único administrador.",
+                    });
+                }
+            }
+
+            // Realiza a remoção
+            const left = await teamService.removeSelfFromTeam(teamId, userId);
+
+            if (!left) {
+                return res.status(404).json({ error: "Você não pertence a este time ou ele não existe." });
+            }
+
+            return res.status(200).json({ message: "Você saiu do time com sucesso." });
+        } catch (error) {
+            console.error("Erro ao sair do time:", error.message);
+            return res.status(500).json({ error: "Erro ao sair do time." });
+        }
+    }
+
 }
 
 module.exports = new TeamController();

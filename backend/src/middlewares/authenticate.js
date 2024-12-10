@@ -23,6 +23,7 @@ module.exports = (req, res, next) => {
       email: decoded.email,
       name: decoded.name,
       plan: decoded.plan, // Inclua o plano do usuário no objeto req.user
+      teamId: decoded.teamId || null,
     };
 
     return next();
