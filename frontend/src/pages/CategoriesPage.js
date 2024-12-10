@@ -114,13 +114,11 @@ export const CategoriesPage = () => {
       showErrorToast("Categoria inválida para edição.");
       return;
     }
-  
+    console.log(category);
     setNewCategory({
       name: category.name,
       color: category.color || "#000000", // Cor padrão
-      keywords: Array.isArray(category.keywords)
-        ? category.keywords.join(", ") // Converte o array para string separada por vírgulas
-        : "", // Caso não tenha palavras-chave, define como string vazia
+      keywords: category.keywords
     });
     setEditingCategory(category);
   };
