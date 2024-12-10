@@ -28,8 +28,6 @@ class TeamController {
         }
     }
 
-
-
     async getTeamById(req, res) {
         const { id } = req.params;
 

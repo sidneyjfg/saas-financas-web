@@ -48,10 +48,22 @@ export const TeamManagement = () => {
       showErrorToast("Digite um nome válido para a equipe.");
       return;
     }
-
+  
     try {
       const response = await api.post("/teams", { name: newTeamName });
-      setTeams((prev) => [...prev, response.data]);
+      console.log(response.data);
+      // Adicionar o próprio usuário como membro ao criar o time
+      const createdTeam = {
+        ...response.data,
+        members: [
+          {
+            id: currentUser.id,
+            email: currentUser.email,
+            role: "owner", // O criador do time é o "owner" por padrão
+          },
+        ],
+      };
+      setTeams((prev) => [...prev, createdTeam]);
       setNewTeamName("");
       setIsModalOpen(false);
       showSuccessToast("Equipe criada com sucesso!");
@@ -62,27 +74,34 @@ export const TeamManagement = () => {
   };
 
   const toggleTeamExpansion = async (teamId) => {
+  
+    if (!teamId) {
+      showErrorToast("ID do time não fornecido.");
+      return;
+    }
+  
     if (expandedTeamIds.includes(teamId)) {
       setExpandedTeamIds(expandedTeamIds.filter((id) => id !== teamId));
+      console.log("Team collapsed:", teamId);
     } else {
       setExpandedTeamIds([...expandedTeamIds, teamId]);
       try {
         const response = await api.get(`/teams/members`, {
           headers: {
-            'x-team-id': teamId,
+            "x-team-id": teamId,
           },
         });
-
-        const updatedMembers = response.data.map((member) => {
-          // Adiciona a lógica para controle de permissões
-          return {
-            ...member,
-            canRemove: currentUser.role === "admin" || currentUser.role === "owner", // Define quem pode remover
-            canLeave: member.email === currentUser.email, // Define se o usuário pode sair
-          };
-        });
-
+  
+        console.log("Members loaded from API:", response.data);
+  
+        const updatedMembers = response.data.map((member) => ({
+          ...member,
+          canRemove: currentUser.role === "admin" || currentUser.role === "owner",
+          canLeave: member.email === currentUser.email,
+        }));
+  
         setTeamMembers((prev) => ({ ...prev, [teamId]: updatedMembers }));
+        console.log("Updated team members:", teamMembers);
         showInfoToast("Membros carregados com sucesso!");
       } catch (error) {
         console.error("Erro ao carregar membros:", error.response?.data || error);
@@ -90,6 +109,7 @@ export const TeamManagement = () => {
       }
     }
   };
+  
 
   const addMember = async (teamId) => {
     if (currentUser.role !== "admin" && currentUser.role !== "owner") {
@@ -252,13 +272,13 @@ export const TeamManagement = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {teams.map((team) => (
           <div
-            key={team.id} // Use o ID do time como chave única
+            key={team.teamId} // Use o ID do time como chave única
             className={`bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition ${expandedTeamIds.includes(team.id) ? "ring-2 ring-teal-600" : ""}`}
           >
             {/* Cabeçalho do Card */}
             <div
               className="flex justify-between items-center cursor-pointer"
-              onClick={() => toggleTeamExpansion(team.id)}
+              onClick={() => toggleTeamExpansion(team.teamId)}
             >
               <div>
                 <h2 className="text-xl font-bold text-teal-600">{team.name}</h2>
