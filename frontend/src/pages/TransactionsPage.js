@@ -562,7 +562,7 @@ export const TransactionsPage = () => {
                                         {formatCurrency(transaction.amount)}
                                     </td>
                                     <td className="py-4 px-6 text-gray-700 text-sm">
-                                        {transaction.description.replace(/\d+(\.\d+)?/g, (match) => formatCurrency(Number(match)))}
+                                        {transaction.description}
                                     </td>
                                     <td className="py-4 px-6 text-sm">
                                         <button
