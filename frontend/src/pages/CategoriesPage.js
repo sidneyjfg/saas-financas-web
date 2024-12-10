@@ -28,27 +28,30 @@ export const CategoriesPage = () => {
         const endpoint =
           userPlan === "Basic" ? "/categories/basic" : "/categories/premium";
         const response = await api.get(endpoint);
-        showInfoToast("Categorias carregadas");
-
+    
+        const categoriesData = Array.isArray(response.data) ? response.data : [];
         setCategories(
-          response.data.map((category) => ({
-            ...category,
-            keywords: Array.isArray(category.keywords)
-              ? category.keywords.join(", ")
-              : category.keywords || "", // Manter a string original ou vazio
-          }))
+          categoriesData
+            .filter((category) => category && category.id) // Garante que itens inválidos sejam descartados
+            .map((category) => ({
+              ...category,
+              keywords: Array.isArray(category.keywords)
+                ? category.keywords.join(", ") // Converte array para string separada por vírgulas
+                : "", // Caso não tenha palavras-chave, define como string vazia
+            }))
         );
+        showInfoToast("Categorias carregadas");
       } catch (error) {
         console.error("Erro ao carregar categorias:", error);
+        showErrorToast("Erro ao carregar categorias.");
       } finally {
         setLoading(false);
       }
     };
-
+    
     fetchCategories();
   }, [userPlan]);
 
-  // Create or Update Category
   // Create or Update Category
   const handleSaveCategory = async () => {
     if (!newCategory.name.trim()) {
@@ -56,7 +59,6 @@ export const CategoriesPage = () => {
       return;
     }
 
-    // Garante que keywords será um array válido
     const keywordsArray = newCategory.keywords
       ? newCategory.keywords
         .split(",")
@@ -66,17 +68,15 @@ export const CategoriesPage = () => {
 
     const categoryData = {
       name: newCategory.name,
-      color: newCategory.color || "#000000", // Define cor padrão
-      keywords: keywordsArray, // Envia o array de keywords diretamente
+      color: newCategory.color || "#000000",
+      keywords: keywordsArray, // Envia o array diretamente
     };
 
     try {
       if (editingCategory) {
-        // Atualizar categoria existente
         await api.put(`/categories/${editingCategory.id}`, categoryData);
         showSuccessToast("Categoria atualizada com sucesso!");
 
-        // Atualizar a categoria no estado local
         setCategories((prevCategories) =>
           prevCategories.map((category) =>
             category.id === editingCategory.id
@@ -85,22 +85,19 @@ export const CategoriesPage = () => {
           )
         );
       } else {
-        // Criar nova categoria
         const response = await api.post("/categories", categoryData);
         showSuccessToast("Categoria criada com sucesso!");
 
-        // Adicionar a nova categoria ao estado local
         setCategories((prevCategories) => [
           ...prevCategories,
           {
             ...categoryData,
-            id: response.data.id, // Use o ID retornado pela API
+            id: response.data.id,
             keywords: keywordsArray.join(", "),
           },
         ]);
       }
 
-      // Resetar o formulário
       setNewCategory({ name: "", color: "#000000", keywords: "" });
       setEditingCategory(null);
     } catch (error) {
@@ -112,28 +109,37 @@ export const CategoriesPage = () => {
   };
 
 
-
   const handleEditCategory = (category) => {
+    if (!category || !category.id) {
+      showErrorToast("Categoria inválida para edição.");
+      return;
+    }
+  
     setNewCategory({
       name: category.name,
       color: category.color || "#000000", // Cor padrão
-      keywords: Array.isArray(category.keywords) // Verifica se é um array
-        ? category.keywords.join(",") // Converte array para string
-        : category.keywords, // Se não for array, assume é string só passar
+      keywords: Array.isArray(category.keywords)
+        ? category.keywords.join(", ") // Converte o array para string separada por vírgulas
+        : "", // Caso não tenha palavras-chave, define como string vazia
     });
     setEditingCategory(category);
   };
+  
 
   // Delete Category
   const handleDeleteCategory = async (id) => {
     try {
+      setLoading(true); // Mostra um spinner ou algo similar
       await api.delete(`/categories/${id}`);
       showSuccessToast("Categoria removida com sucesso!");
       setCategories(categories.filter((category) => category.id !== id));
     } catch (error) {
       showErrorToast("Erro ao excluir categoria.");
+    } finally {
+      setLoading(false); // Oculta o spinner
     }
   };
+
 
   if (loading) {
     return <p className="text-center mt-6 text-gray-500">Carregando...</p>;
@@ -195,41 +201,42 @@ export const CategoriesPage = () => {
           </p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {categories.map((category) => (
-              <div
-                key={category.id}
-                className="bg-white p-4 shadow-lg rounded-lg flex justify-between items-center"
-              >
-                <div>
-                  <div className="flex items-center gap-4">
-                    <div
-                      className="w-6 h-6 rounded-full"
-                      style={{ backgroundColor: category.color || "#000000" }}
-                    ></div>
-                    <span className="text-gray-700 font-bold">
-                      {category.name}
-                    </span>
+            {categories
+              .filter((category) => category && category.id) // Garante que a categoria e o ID existam
+              .map((category) => (
+                <div
+                  key={category.id}
+                  className="bg-white p-4 shadow-lg rounded-lg flex justify-between items-center"
+                >
+                  <div>
+                    <div className="flex items-center gap-4">
+                      <div
+                        className="w-6 h-6 rounded-full"
+                        style={{ backgroundColor: category.color || "#000000" }}
+                      ></div>
+                      <span className="text-gray-700 font-bold">{category.name}</span>
+                    </div>
+                    <p className="text-sm text-gray-500">
+                      Palavras-chave: {category.keywords}
+                    </p>
                   </div>
-                  <p className="text-sm text-gray-500">
-                    Palavras-chave: {category.keywords}
-                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleEditCategory(category)}
+                      className="px-3 py-1 bg-blue-500 text-white font-bold rounded-lg hover:bg-blue-600 transition-all duration-300"
+                    >
+                      Editar
+                    </button>
+                    <button
+                      onClick={() => handleDeleteCategory(category.id)}
+                      className="px-3 py-1 bg-red-500 text-white font-bold rounded-lg hover:bg-red-600 transition-all duration-300"
+                    >
+                      Excluir
+                    </button>
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => handleEditCategory(category)}
-                    className="px-3 py-1 bg-blue-500 text-white font-bold rounded-lg hover:bg-blue-600 transition-all duration-300"
-                  >
-                    Editar
-                  </button>
-                  <button
-                    onClick={() => handleDeleteCategory(category.id)}
-                    className="px-3 py-1 bg-red-500 text-white font-bold rounded-lg hover:bg-red-600 transition-all duration-300"
-                  >
-                    Excluir
-                  </button>
-                </div>
-              </div>
-            ))}
+              ))}
+
           </div>
         )}
       </div>

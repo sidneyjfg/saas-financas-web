@@ -11,45 +11,48 @@ class CategoryService {
     return await categoryRepository.findAllPremiumByUser(userId);
   }
 
-  // Listar categorias Básicas
   async getBasicCategories(userId) {
     return await categoryRepository.findAllBasicByUser(userId);
   }
-
   
   async createCategory({ name, color, keywords, userId, userPlan }) {
-    // Verificar o número atual de categorias
     const currentCategoryCount = await categoryRepository.countByUser(userId);
-  
-    // Obter o limite com base no plano
     const limit = CATEGORY_LIMITS[userPlan] || 0;
-  
-    // Verificar se o limite foi atingido
+
     if (currentCategoryCount >= limit) {
       throw new Error(
         `Limite de categorias atingido para o plano ${userPlan}. Atualize para Premium para mais categorias.`
       );
     }
-  
-    // Criar a categoria
+
     return await categoryRepository.create({ name, color, keywords, userId });
   }
   
 
   // Atualizar categoria existente
   async updateCategory(id, categoryData) {
-    try {
-      // Chamar o repositório para atualizar os dados
-      return await categoryRepository.update(id, categoryData);
-    } catch (error) {
-      console.error("Error in updateCategory service:", error.message);
-      throw error;
+    const existingCategory = await categoryRepository.findCategoryByIdAndUser(
+      id,
+      categoryData.userId
+    );
+    if (!existingCategory) {
+      throw new Error("Categoria não encontrada ou não pertence ao usuário.");
     }
+
+    return await categoryRepository.update(id, categoryData);
   }
 
 
   // Excluir categoria
   async deleteCategory(id, userId) {
+    const existingCategory = await categoryRepository.findCategoryByIdAndUser(
+      id,
+      userId
+    );
+    if (!existingCategory) {
+      throw new Error("Categoria não encontrada ou não pertence ao usuário.");
+    }
+
     return await categoryRepository.delete(id, userId);
   }
 }

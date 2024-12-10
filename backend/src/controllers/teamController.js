@@ -99,10 +99,10 @@ class TeamController {
     }
 
     async removeMember(req, res) {
-        console.log("PArams: ",req.params);
+        console.log("PArams: ", req.params);
         const { userId } = req.params;
         const teamId = req.headers['x-team-id']; // Obtém o teamId dos headers
-        console.log(userId,teamId, req.user.id);
+        console.log(userId, teamId, req.user.id);
         try {
             const removed = await teamService.removeMember(teamId, userId, req.user.id);
             if (!removed) {
@@ -152,8 +152,6 @@ class TeamController {
     async getTeamTransactions(req, res) {
         const teamId = req.headers['x-team-id']; // Lê o ID do time dos headers
         const userId = req.user.id;
-        console.log("TeamID: ", teamId);
-        console.log("suerID: ", userId);
         if (!teamId) {
             return res.status(400).json({ error: "ID do time não fornecido." });
         }
@@ -263,6 +261,103 @@ class TeamController {
         } catch (error) {
             console.error("Erro ao sair do time:", error.message);
             return res.status(500).json({ error: "Erro ao sair do time." });
+        }
+    }
+
+    async getCategories(req, res) {
+        const teamId = req.headers["x-team-id"];
+        if (!teamId) {
+            return res.status(400).json({ error: "Team ID é obrigatório." });
+        }
+
+        try {
+            const categories = await teamService.getCategories(teamId);
+            return res.status(200).json(categories);
+        } catch (error) {
+            console.error("Erro ao buscar categorias:", error.message);
+            return res.status(500).json({ error: "Erro ao buscar categorias." });
+        }
+    }
+
+    async createCategory(req, res) {
+        const teamId = req.headers["x-team-id"];
+        const { name } = req.body;
+
+        if (!teamId) {
+            return res.status(400).json({ error: "Team ID é obrigatório." });
+        }
+
+        try {
+            const category = await teamService.createCategory(teamId, name);
+            return res.status(201).json(category);
+        } catch (error) {
+            console.error("Erro ao criar categoria:", error.message);
+            return res.status(500).json({ error: error.message });
+        }
+    }
+
+    async deleteCategory(req, res) {
+        const teamId = req.headers["x-team-id"];
+        const { id: categoryId } = req.params;
+
+        if (!teamId) {
+            return res.status(400).json({ error: "Team ID é obrigatório." });
+        }
+
+        try {
+            await teamService.deleteCategory(categoryId, teamId);
+            return res.status(200).json({ message: "Categoria removida com sucesso." });
+        } catch (error) {
+            console.error("Erro ao remover categoria:", error.message);
+            return res.status(500).json({ error: error.message });
+        }
+    }
+    async getGoals(req, res) {
+        const teamId = req.headers["x-team-id"];
+        if (!teamId) {
+            return res.status(400).json({ error: "Team ID é obrigatório." });
+        }
+
+        try {
+            const goals = await teamService.getGoals(teamId);
+            return res.status(200).json(goals);
+        } catch (error) {
+            console.error("Erro ao buscar metas:", error.message);
+            return res.status(500).json({ error: "Erro ao buscar metas." });
+        }
+    }
+
+    async createGoal(req, res) {
+        const teamId = req.headers["x-team-id"];
+        const { description } = req.body;
+
+        if (!teamId) {
+            return res.status(400).json({ error: "Team ID é obrigatório." });
+        }
+
+        try {
+            const goal = await teamService.createGoal(teamId, description);
+            return res.status(201).json(goal);
+        } catch (error) {
+            console.error("Erro ao criar meta:", error.message);
+            return res.status(500).json({ error: error.message });
+        }
+    }
+
+    async deleteGoal(req, res) {
+        const teamId = req.headers["x-team-id"];
+        const { id: goalId } = req.params;
+
+        if (!teamId) {
+            return res.status(400).json({ error: "Team ID é obrigatório." });
+        }
+
+        try {
+            await teamService.deleteGoal(goalId, teamId);
+            return res.status(200).json({ message: "Meta removida com sucesso." });
+        } catch (error) {
+            console.error("Erro ao remover meta:", error.message);
+            return res.status(500).json({ error: error.message });
         }
     }
 

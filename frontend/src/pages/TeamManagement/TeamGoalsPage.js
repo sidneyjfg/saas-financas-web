@@ -11,24 +11,41 @@ export const TeamGoalsPage = ({ teamId }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchGoals = async () => {
       try {
-        const [goalsResponse, categoriesResponse] = await Promise.all([
-          api.get(`/teams/goals`),
-          api.get(`/teams/categories`),
-        ]);
+        const goalsResponse = await api.get(`/teams/goals`);
         setGoals(goalsResponse.data);
-        setCategories(categoriesResponse.data);
       } catch (error) {
-        console.error("Erro ao carregar dados:", error);
-        showErrorToast("Erro ao carregar dados do time.");
+        console.error("Erro ao carregar metas:", error);
+        showErrorToast("Erro ao carregar metas do time.");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
+    fetchGoals();
   }, [teamId]);
+
+
+  const fetchCategories = async () => {
+    if (categories.length > 0) return; // Evita carregamento desnecessário
+
+    try {
+      setLoading(true); // Opcional: exibir um indicador de carregamento
+      const categoriesResponse = await api.get(`/teams/categories`);
+      setCategories(categoriesResponse.data);
+    } catch (error) {
+      console.error("Erro ao carregar categorias:", error);
+      showErrorToast("Erro ao carregar categorias do time.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    if (tab === "categories") fetchCategories();
+  };
 
   const addGoal = async () => {
     if (!newGoal) {
@@ -75,26 +92,25 @@ export const TeamGoalsPage = ({ teamId }) => {
       {/* Navigation Tabs */}
       <div className="flex justify-center space-x-4 mb-6">
         <button
-          className={`px-4 py-2 rounded-lg ${
-            activeTab === "goals"
+          className={`px-4 py-2 rounded-lg ${activeTab === "goals"
               ? "bg-teal-600 text-white"
               : "bg-gray-200 text-gray-600"
-          }`}
-          onClick={() => setActiveTab("goals")}
+            }`}
+          onClick={() => handleTabChange("goals")}
         >
           Metas
         </button>
         <button
-          className={`px-4 py-2 rounded-lg ${
-            activeTab === "categories"
+          className={`px-4 py-2 rounded-lg ${activeTab === "categories"
               ? "bg-teal-600 text-white"
               : "bg-gray-200 text-gray-600"
-          }`}
-          onClick={() => setActiveTab("categories")}
+            }`}
+          onClick={() => handleTabChange("categories")}
         >
           Categorias
         </button>
       </div>
+
 
       {/* Goals Tab */}
       {activeTab === "goals" && (

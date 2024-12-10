@@ -137,28 +137,27 @@ class TeamRepository {
 
         return { id: newMember.id, name: user.name, email: user.email, role: newMember.role };
     }
-
-
-
     async verifyMembership(teamId, userId) {
         const member = await TeamMember.findOne({
             where: { teamId, userId },
         });
+
+        if (!member) {
+            console.error(`Usuário ${userId} não está associado ao time ${teamId}`);
+        }
+
         return !!member;
     }
-
-
-
     async removeMember(teamId, userId) {
         // Verifica se o membro existe no time
         const member = await TeamMember.findOne({ where: { teamId, userId } });
         if (!member) {
             throw new Error("Membro não encontrado no time.");
         }
-    
+
         // Remove o membro
         await member.destroy();
-    
+
         // Se o usuário não pertence a outros times, atualize o `teamId` no modelo `User`
         const remainingTeams = await TeamMember.count({ where: { userId } });
         if (remainingTeams === 0) {
@@ -167,10 +166,10 @@ class TeamRepository {
                 { where: { id: userId } }
             );
         }
-    
+
         return true;
     }
-    
+
 
 
     // Busca os membros do time
@@ -311,7 +310,42 @@ class TeamRepository {
             },
         });
     }
-    
+    async getCategoriesByTeamId(teamId) {
+        return await Category.findAll({
+            where: { teamId },
+        });
+    }
+
+    async createCategory(teamId, name) {
+        return await Category.create({ teamId, name });
+    }
+
+    async deleteCategory(categoryId, teamId) {
+        const category = await Category.findOne({ where: { id: categoryId, teamId } });
+        if (!category) {
+            throw new Error("Categoria não encontrada ou você não tem permissão.");
+        }
+        await category.destroy();
+        return true;
+    }
+    async getGoalsByTeamId(teamId) {
+        return await Goal.findAll({
+            where: { teamId },
+        });
+    }
+
+    async createGoal(teamId, description) {
+        return await Goal.create({ teamId, description });
+    }
+
+    async deleteGoal(goalId, teamId) {
+        const goal = await Goal.findOne({ where: { id: goalId, teamId } });
+        if (!goal) {
+            throw new Error("Meta não encontrada ou você não tem permissão.");
+        }
+        await goal.destroy();
+        return true;
+    }
 }
 
 module.exports = new TeamRepository();

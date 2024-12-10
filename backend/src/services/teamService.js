@@ -173,7 +173,34 @@ class TeamService {
     return await teamRepository.removeMember(teamId, userId);
   }
 
+  async getCategories(teamId) {
+    return await teamRepository.getCategoriesByTeamId(teamId);
+  }
 
+  async createCategory(teamId, name) {
+    if (!name.trim()) {
+      throw new Error("O nome da categoria não pode estar vazio.");
+    }
+    return await teamRepository.createCategory(teamId, name);
+  }
+
+  async deleteCategory(categoryId, teamId) {
+    return await teamRepository.deleteCategory(categoryId, teamId);
+  }
+  async getGoals(teamId) {
+    return await teamRepository.getGoalsByTeamId(teamId);
+  }
+
+  async createGoal(teamId, description) {
+    if (!description.trim()) {
+      throw new Error("A descrição da meta não pode estar vazia.");
+    }
+    return await teamRepository.createGoal(teamId, description);
+  }
+
+  async deleteGoal(goalId, teamId) {
+    return await teamRepository.deleteGoal(goalId, teamId);
+  }
 }
 
 module.exports = new TeamService();

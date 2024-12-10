@@ -147,6 +147,7 @@ class TransactionService {
                 name: "Nubank",
                 color: "#8A2BE2",
                 userId,
+                keywords: [], // Inicializa como um array vazio
             });
             categories.push(nubankCategory);
         }
@@ -164,11 +165,14 @@ class TransactionService {
                             const type = amount < 0 ? "income" : "expense";
     
                             // Encontra a categoria correspondente ou usa "Nubank"
-                            const matchedCategory = categories.find((category) =>
-                                category.keywords.some((keyword) =>
-                                    row.title.toLowerCase().includes(keyword)
-                                )
-                            );
+                            const matchedCategory = categories.find((category) => {
+                                const keywords = Array.isArray(category.keywords)
+                                    ? category.keywords
+                                    : []; // Garante que keywords é um array
+                                return keywords.some((keyword) =>
+                                    row.title.toLowerCase().includes(keyword.toLowerCase())
+                                );
+                            });
     
                             transactions.push({
                                 date: new Date(row.date),
@@ -192,6 +196,7 @@ class TransactionService {
         }
         return transactions.length;
     }
+    
 
     async updateCategories(userId) {
         

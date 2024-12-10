@@ -49,9 +49,8 @@ class UserController {
     }
 
     try {
-      // Busca a role do usuário autenticado com base no teamId
       let role = null;
-      console.log(user.teamId);
+
       if (user.teamId) {
         const teamMember = await TeamMember.findOne({
           where: {
@@ -64,11 +63,15 @@ class UserController {
         role = teamMember ? teamMember.role : null;
       }
 
-      // Retorna os dados do usuário, incluindo a role
+      // Adicione um aviso se a role for nula
+      if (user.teamId && !role) {
+        console.warn(`Nenhuma role encontrada para o usuário ${user.id} no time ${user.teamId}`);
+      }
+
       res.status(200).json({
         id: user.id,
         email: user.email,
-        role: role, // Retorna a role associada ao teamId
+        role: role,
         name: user.name,
       });
     } catch (error) {
@@ -76,6 +79,7 @@ class UserController {
       res.status(500).json({ error: "Erro ao buscar informações do usuário." });
     }
   }
+
 
 }
 

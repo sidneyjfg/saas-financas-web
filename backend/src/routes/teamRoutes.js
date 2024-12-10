@@ -5,6 +5,7 @@ const authenticate = require("../middlewares/authenticate");
 const router = express.Router();
 router.get("/audit-logs", authenticate, teamController.getAuditLogs);
 
+// Rotas de transações do time
 router.get("/transactions", authenticate, teamController.getTeamTransactions);
 router.post("/transactions", authenticate, teamController.addTeamTransaction);
 router.get("/transactions", authenticate, teamController.getTransactions);
@@ -22,6 +23,15 @@ router.get("/", authenticate, teamController.getTeams); // Listar os times do us
 router.put("/:id", authenticate, teamController.updateTeam); // Atualizar um time
 router.delete("/:id", authenticate, teamController.deleteTeam); // Excluir um time
 
+// Rotas de Categorias
+router.get("/categories", authenticate, teamController.getCategories);
+router.post("/categories", authenticate, teamController.createCategory);
+router.delete("/categories/:id", authenticate, teamController.deleteCategory);
+
+// Rotas de Metas
+router.get("/goals", authenticate, teamController.getGoals);
+router.post("/goals", authenticate, teamController.createGoal);
+router.delete("/goals/:id", authenticate, teamController.deleteGoal);
 
 
 

@@ -17,13 +17,13 @@ export const TransactionsTeamPage = () => {
   const location = useLocation();
   const teamFromState = location.state?.team; // Recupera o time do estado da navegação
   const { selectedTeam, setSelectedTeam } = useTeam();
-  
+
+
   useEffect(() => {
-      if (!selectedTeam && teamFromState) {
-          setSelectedTeam(teamFromState); // Atualiza o contexto caso não tenha um time selecionado
-      }
+    console.log("teamFromState, ", teamFromState);
+    console.log("SelectedTeam, ", selectedTeam);
+    setSelectedTeam(teamFromState);
   }, [selectedTeam, teamFromState, setSelectedTeam]);
-  
 
 
   useEffect(() => {
@@ -32,17 +32,19 @@ export const TransactionsTeamPage = () => {
       return;
     }
 
+    console.log("Carregando transações para o time:", selectedTeam);
+
     const fetchTransactions = async () => {
       try {
         const response = await api.get("/teams/transactions", {
           headers: {
-            "X-Team-ID": selectedTeam.id, // Envia o ID do time nos headers
+            "X-Team-ID": selectedTeam.id,
           },
         });
         setTransactions(response.data.transactions);
-        console.log("Transações carregadas com sucesso");
+        console.log("Transações carregadas:", response.data.transactions);
       } catch (error) {
-        console.error("Erro ao carregar transações:", error);
+        console.error("Erro ao carregar transações:", error.response?.data || error);
         showErrorToast("Erro ao carregar transações.");
       } finally {
         setLoading(false);
@@ -50,29 +52,30 @@ export const TransactionsTeamPage = () => {
     };
 
     fetchTransactions();
-  }, [selectedTeam]); // `selectedTeam` deve estar no array de dependências  
+  }, [selectedTeam]);
+
 
 
   const addTransaction = async () => {
     if (!newTransaction.description || !newTransaction.amount || !newTransaction.date) {
-        showErrorToast("Preencha todos os campos.");
-        return;
+      showErrorToast("Preencha todos os campos.");
+      return;
     }
 
     try {
-        const response = await api.post("/teams/transactions", newTransaction, {
-            headers: {
-                "X-Team-ID": selectedTeam.id, // Envia o ID do time no cabeçalho
-            },
-        });
-        showSuccessToast("Transação adicionada com sucesso!");
-        setTransactions((prev) => [...prev, response.data]);
-        setNewTransaction({ description: "", amount: "", type: "income", date: new Date().toISOString().split("T")[0] });
+      const response = await api.post("/teams/transactions", newTransaction, {
+        headers: {
+          "X-Team-ID": selectedTeam.id, // Envia o ID do time no cabeçalho
+        },
+      });
+      showSuccessToast("Transação adicionada com sucesso!");
+      setTransactions((prev) => [...prev, response.data]);
+      setNewTransaction({ description: "", amount: "", type: "income", date: new Date().toISOString().split("T")[0] });
     } catch (error) {
-        console.error("Erro ao adicionar transação:", error);
-        showErrorToast("Erro ao adicionar transação.");
+      console.error("Erro ao adicionar transação:", error);
+      showErrorToast("Erro ao adicionar transação.");
     }
-};
+  };
 
 
   if (!selectedTeam) {
