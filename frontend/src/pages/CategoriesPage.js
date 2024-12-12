@@ -28,19 +28,23 @@ export const CategoriesPage = () => {
         const endpoint =
           userPlan === "Basic" ? "/categories/basic" : "/categories/premium";
         const response = await api.get(endpoint);
-    
+  
         const categoriesData = Array.isArray(response.data) ? response.data : [];
+  
         setCategories(
-          categoriesData
-            .filter((category) => category && category.id) // Garante que itens inválidos sejam descartados
-            .map((category) => ({
-              ...category,
-              keywords: Array.isArray(category.keywords)
-                ? category.keywords.join(", ") // Converte array para string separada por vírgulas
-                : "", // Caso não tenha palavras-chave, define como string vazia
-            }))
+          categoriesData.map((category) => ({
+            ...category,
+            keywords: Array.isArray(category.keywords)
+              ? category.keywords.join(", ") // Converte array para string separada por vírgulas
+              : category.keywords.replace(/[\[\]"]/g, "") || "Nenhuma palavra-chave", // Remove colchetes e aspas, ou define texto padrão
+          }))
         );
-        showInfoToast("Categorias carregadas");
+  
+        if (categoriesData.length === 0) {
+          showInfoToast("Nenhuma categoria encontrada.");
+        } else {
+          showInfoToast("Categorias carregadas");
+        }
       } catch (error) {
         console.error("Erro ao carregar categorias:", error);
         showErrorToast("Erro ao carregar categorias.");
@@ -48,9 +52,12 @@ export const CategoriesPage = () => {
         setLoading(false);
       }
     };
-    
+  
     fetchCategories();
   }, [userPlan]);
+  
+  
+  
 
   // Create or Update Category
   const handleSaveCategory = async () => {
@@ -114,15 +121,17 @@ export const CategoriesPage = () => {
       showErrorToast("Categoria inválida para edição.");
       return;
     }
-    console.log(category);
+  
     setNewCategory({
       name: category.name,
-      color: category.color || "#000000", // Cor padrão
+      color: category.color || "#000000",
       keywords: category.keywords
+        .replace(/[\[\]"]/g, "") // Remove colchetes e aspas
+        .split(",")
+        .join(", "), // Garante espaçamento correto
     });
     setEditingCategory(category);
   };
-  
 
   // Delete Category
   const handleDeleteCategory = async (id) => {

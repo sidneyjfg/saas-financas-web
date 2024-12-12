@@ -21,7 +21,7 @@ class TransactionService {
     // Cria uma nova transação
     async createTransaction(transactionData) {
         try {
-            
+
 
             // Verificar se userId está presente
             if (!transactionData.userId) {
@@ -38,7 +38,7 @@ class TransactionService {
             }
 
             const transaction = await transactionRepository.create(transactionData);
-            
+
 
             // Atualizar progresso da meta, se aplicável
             if (transactionData.categoryId) {
@@ -59,7 +59,7 @@ class TransactionService {
             throw new Error("categoryId deve ser um número válido.");
         }
 
-        
+
 
         const transaction = await transactionRepository.findById(id);
 
@@ -89,7 +89,7 @@ class TransactionService {
         if (transaction.userId !== userId) {
             throw new Error('Usuário não autorizado a excluir esta transação');
         }
-        
+
         await transactionRepository.delete(id, userId);
 
         // Atualizar progresso da meta, se aplicável
@@ -139,7 +139,7 @@ class TransactionService {
     async importTransactionsFromCSV(filePath, userId) {
         const transactions = [];
         const categories = await categoryRepository.findAllPremiumByUser(userId);
-    
+
         // Verifica ou cria categoria padrão "Nubank"
         let nubankCategory = categories.find((cat) => cat.name === "Nubank");
         if (!nubankCategory) {
@@ -151,7 +151,7 @@ class TransactionService {
             });
             categories.push(nubankCategory);
         }
-    
+
         // Processar CSV
         await new Promise((resolve, reject) => {
             fs.createReadStream(filePath)
@@ -160,10 +160,10 @@ class TransactionService {
                     try {
                         if (row.date && row.amount && row.title) {
                             const amount = parseFloat(row.amount);
-    
+
                             // Define o tipo da transação baseado no valor
                             const type = amount < 0 ? "income" : "expense";
-    
+
                             // Encontra a categoria correspondente ou usa "Nubank"
                             const matchedCategory = categories.find((category) => {
                                 const keywords = Array.isArray(category.keywords)
@@ -173,7 +173,7 @@ class TransactionService {
                                     row.title.toLowerCase().includes(keyword.toLowerCase())
                                 );
                             });
-    
+
                             transactions.push({
                                 date: new Date(row.date),
                                 type,
@@ -190,46 +190,61 @@ class TransactionService {
                 .on("end", resolve)
                 .on("error", reject);
         });
-    
+
         if (transactions.length > 0) {
             await transactionRepository.bulkCreate(transactions);
         }
         return transactions.length;
     }
-    
+
 
     async updateCategories(userId) {
-        
-
         const transactions = await transactionRepository.findAllByUser(userId);
-        const categories = await categoryRepository.findAllPremiumByUser(userId);
+        console.log("Transações encontradas: ", transactions);
 
-        
-        
+        const categories = await categoryRepository.findAllPremiumByUser(userId);
+        console.log("Categorias encontradas (antes da conversão): ", categories);
+
+        // Converta o campo keywords de string para array
+        const parsedCategories = categories.map((category) => ({
+            ...category,
+            keywords: typeof category.keywords === "string" ? JSON.parse(category.keywords) : category.keywords,
+        }));
+        console.log("Categorias encontradas (após conversão): ", parsedCategories);
 
         let updatedCount = 0;
 
         for (const transaction of transactions) {
-            const matchedCategory = categories.find((category) => {
-                // Certifique-se de que `keywords` é um array
+            const matchedCategory = parsedCategories.find((category) => {
                 return category.keywords.some((keyword) =>
                     transaction.description.toLowerCase().includes(keyword.toLowerCase())
                 );
             });
 
-            if (matchedCategory && transaction.categoryId !== matchedCategory.id) {
-                await transactionRepository.update(
-                    transaction.id,
-                    { categoryId: matchedCategory.id },
-                    userId // Passe o userId aqui
+            if (matchedCategory) {
+                console.log(
+                    `Transação "${transaction.description}" correspondeu à categoria "${matchedCategory.name}".`
                 );
-                updatedCount++;
+
+                if (transaction.categoryId !== matchedCategory.id) {
+                    console.log(
+                        `Atualizando transação ${transaction.id} para a categoria ${matchedCategory.id}`
+                    );
+
+                    await transactionRepository.update(
+                        transaction.id,
+                        { categoryId: matchedCategory.id },
+                        userId
+                    );
+                    updatedCount++;
+                }
             }
         }
 
-        
+        console.log(`Total de transações atualizadas: ${updatedCount}`);
         return updatedCount;
     }
+
 
     async checkFileHash(hash) {
         const existingFile = await FileHashes.findOne({ where: { hash } });
@@ -240,12 +255,12 @@ class TransactionService {
             throw new Error("Usuário não autenticado ao salvar o hash do arquivo.");
         }
         return await FileHashes.create({ hash, userId });
-    }    
+    }
     async deleteAllTransactions(userId) {
         try {
             // Exclui todas as transações relacionadas ao userId
             await transactionRepository.deleteAllByUser(userId);
-    
+
             // Exclui o hash associado ao userId 
             await hashFileRepository.deleteAllByUserId(userId);
         } catch (error) {
@@ -253,7 +268,7 @@ class TransactionService {
             throw error; // Relança o erro para o controlador
         }
     }
-    async  batchDeleteTransactions(ids) {
+    async batchDeleteTransactions(ids) {
         try {
             await transactionRepository.batchDelete(ids);
         } catch (error) {
@@ -261,7 +276,7 @@ class TransactionService {
             throw new Error("Erro ao excluir transações.");
         }
     }
-    
+
 }
 
 module.exports = new TransactionService();

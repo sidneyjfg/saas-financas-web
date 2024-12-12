@@ -21,19 +21,29 @@ export const TeamManagement = () => {
   useEffect(() => {
     const fetchTeamsAndUser = async () => {
       try {
-        // Obter o e-mail e a role do usuário atual
-        const userResponse = await api.get("/users/me");
-        setCurrentUser({
-          email: userResponse.data.email,
-          teamId: userResponse.data.teamId,
-          role: userResponse.data.role // Certifique-se de que a API retorna a role
-        });
-        console.log(userResponse.data);
-        // Carregar os times
+        // Carregar os times primeiro
         const teamsResponse = await api.get("/teams");
-        setTeams(teamsResponse.data);
+        const availableTeams = teamsResponse.data;
+
+        if (availableTeams.length === 0) {
+          console.log("Nenhum time disponível.");
+          setLoading(false);
+          return;
+        }
+
+        setTeams(availableTeams);
+
+        // Carregar os dados do usuário apenas se houver times
+        const userResponse = await api.get("/users/me");
+        const userData = userResponse.data;
+
+        setCurrentUser({
+          email: userData.email,
+          teamId: userData.teamId,
+          role: userData.role,
+        });
       } catch (error) {
-        console.error("Erro ao carregar dados:", error);
+        console.error("Erro ao carregar times ou dados do usuário:", error);
         showErrorToast("Erro ao carregar dados.");
       } finally {
         setLoading(false);
@@ -43,23 +53,22 @@ export const TeamManagement = () => {
     fetchTeamsAndUser();
   }, []);
 
+
   const handleCreateTeam = async () => {
     if (!newTeamName.trim()) {
       showErrorToast("Digite um nome válido para a equipe.");
       return;
     }
-  
+
     try {
       const response = await api.post("/teams", { name: newTeamName });
-      console.log(response.data);
-      // Adicionar o próprio usuário como membro ao criar o time
       const createdTeam = {
         ...response.data,
         members: [
           {
             id: currentUser.id,
             email: currentUser.email,
-            role: "owner", // O criador do time é o "owner" por padrão
+            role: "owner",
           },
         ],
       };
@@ -67,49 +76,57 @@ export const TeamManagement = () => {
       setNewTeamName("");
       setIsModalOpen(false);
       showSuccessToast("Equipe criada com sucesso!");
+
+      // Realizar o fetch do usuário após criar a equipe
+      const userResponse = await api.get("/users/me");
+      const userData = userResponse.data;
+      setCurrentUser({
+        email: userData.email,
+        teamId: userData.teamId,
+        role: userData.role,
+      });
+      showInfoToast("Usuário atualizado com sucesso!");
     } catch (error) {
       console.error("Erro ao criar equipe:", error);
       showErrorToast("Erro ao criar equipe.");
     }
   };
 
+
   const toggleTeamExpansion = async (teamId) => {
-  
     if (!teamId) {
       showErrorToast("ID do time não fornecido.");
       return;
     }
-  
+
     if (expandedTeamIds.includes(teamId)) {
-      setExpandedTeamIds(expandedTeamIds.filter((id) => id !== teamId));
-      console.log("Team collapsed:", teamId);
-    } else {
-      setExpandedTeamIds([...expandedTeamIds, teamId]);
-      try {
-        const response = await api.get(`/teams/members`, {
-          headers: {
-            "x-team-id": teamId,
-          },
-        });
-  
-        console.log("Members loaded from API:", response.data);
-  
-        const updatedMembers = response.data.map((member) => ({
-          ...member,
-          canRemove: currentUser.role === "admin" || currentUser.role === "owner",
-          canLeave: member.email === currentUser.email,
-        }));
-  
-        setTeamMembers((prev) => ({ ...prev, [teamId]: updatedMembers }));
-        console.log("Updated team members:", teamMembers);
-        showInfoToast("Membros carregados com sucesso!");
-      } catch (error) {
-        console.error("Erro ao carregar membros:", error.response?.data || error);
-        showErrorToast("Erro ao carregar os membros do time.");
-      }
+      setExpandedTeamIds((prev) => prev.filter((id) => id !== teamId));
+      return;
+    }
+
+    setExpandedTeamIds((prev) => [...prev, teamId]);
+
+    try {
+      const response = await api.get(`/teams/members`, {
+        headers: {
+          "x-team-id": teamId,
+        },
+      });
+
+      const updatedMembers = response.data.map((member) => ({
+        ...member,
+        canRemove: currentUser.role === "admin" || currentUser.role === "owner",
+        canLeave: member.email === currentUser.email,
+      }));
+
+      setTeamMembers((prev) => ({ ...prev, [teamId]: updatedMembers }));
+      showInfoToast("Membros carregados com sucesso!");
+    } catch (error) {
+      console.error("Erro ao carregar membros:", error.response?.data || error);
+      showErrorToast("Erro ao carregar os membros do time.");
     }
   };
-  
+
 
   const addMember = async (teamId) => {
     if (currentUser.role !== "admin" && currentUser.role !== "owner") {
@@ -217,7 +234,7 @@ export const TeamManagement = () => {
 
   const handleViewTransactions = (team) => {
     setSelectedTeam(team); // Armazena o time no contexto
-    console.log("TeamManagement: ",team);
+    console.log("TeamManagement: ", team);
     navigate("/team-management/transactions", { state: { team } }); // Passa o time no estado da navegação
   };
 

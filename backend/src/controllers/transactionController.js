@@ -119,9 +119,12 @@ class TransactionController {
     }
     try {
       const updatedCount = await transactionService.updateCategories(userId);
+      console.log("Finish Categories");
       return res
         .status(200)
         .json({ message: `${updatedCount} transações foram atualizadas.` });
+
+      
     } catch (error) {
       console.error("Erro ao atualizar categorias:", error.message);
       return res.status(500).json({ error: "Erro ao atualizar categorias." });
@@ -190,17 +193,17 @@ class TransactionController {
     const { ids } = req.body;
 
     if (!Array.isArray(ids) || ids.length === 0) {
-        return res.status(400).json({ error: "Nenhuma transação foi selecionada para exclusão." });
+      return res.status(400).json({ error: "Nenhuma transação foi selecionada para exclusão." });
     }
 
     try {
-        await transactionService.batchDeleteTransactions(ids);
-        return res.status(200).json({ message: "Transações excluídas com sucesso." });
+      await transactionService.batchDeleteTransactions(ids);
+      return res.status(200).json({ message: "Transações excluídas com sucesso." });
     } catch (error) {
-        console.error("Erro ao excluir transações:", error);
-        return res.status(500).json({ error: "Erro ao excluir transações." });
+      console.error("Erro ao excluir transações:", error);
+      return res.status(500).json({ error: "Erro ao excluir transações." });
     }
-}
+  }
 
 
 }
