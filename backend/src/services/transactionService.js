@@ -201,36 +201,39 @@ class TransactionService {
     async updateCategories(userId) {
         const transactions = await transactionRepository.findAllByUser(userId);
         console.log("Transações encontradas: ", transactions);
-
+    
         const categories = await categoryRepository.findAllPremiumByUser(userId);
         console.log("Categorias encontradas (antes da conversão): ", categories);
-
-        // Converta o campo keywords de string para array
+    
+        // Converte e limpa as keywords de cada categoria
         const parsedCategories = categories.map((category) => ({
             ...category,
-            keywords: typeof category.keywords === "string" ? JSON.parse(category.keywords) : category.keywords,
+            keywords: JSON.parse(category.keywords[0]).map((keyword) => keyword.trim()), // Extrai o conteúdo real das keywords
         }));
+    
         console.log("Categorias encontradas (após conversão): ", parsedCategories);
-
+    
         let updatedCount = 0;
-
+    
         for (const transaction of transactions) {
+            // Verifica se há correspondência entre a descrição da transação e as keywords
             const matchedCategory = parsedCategories.find((category) => {
                 return category.keywords.some((keyword) =>
                     transaction.description.toLowerCase().includes(keyword.toLowerCase())
                 );
             });
-
+    
             if (matchedCategory) {
                 console.log(
                     `Transação "${transaction.description}" correspondeu à categoria "${matchedCategory.name}".`
                 );
-
+    
+                // Atualiza a categoria da transação somente se for diferente
                 if (transaction.categoryId !== matchedCategory.id) {
                     console.log(
                         `Atualizando transação ${transaction.id} para a categoria ${matchedCategory.id}`
                     );
-
+    
                     await transactionRepository.update(
                         transaction.id,
                         { categoryId: matchedCategory.id },
@@ -240,10 +243,11 @@ class TransactionService {
                 }
             }
         }
-
+    
         console.log(`Total de transações atualizadas: ${updatedCount}`);
         return updatedCount;
     }
+    
 
 
     async checkFileHash(hash) {
