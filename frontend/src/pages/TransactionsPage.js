@@ -178,7 +178,6 @@ export const TransactionsPage = () => {
     const handleUpdateCategories = async () => {
         try {
             await api.put("/transactions/update-categories");
-
             // Dispara o reload para o contexto
             // Atualizar a lista de transações após a atualização
             const transactionsResponse = await api.get("/transactions");
