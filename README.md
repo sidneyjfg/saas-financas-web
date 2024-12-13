@@ -2,7 +2,7 @@
 
 ## **Descrição do Projeto**
 
-O **SaaS Finanças** é uma aplicação web para controle financeiro e planejamento de metas. Criado para usuários individuais, freelancers e pequenas empresas, o sistema facilita o gerenciamento de receitas, despesas, orçamentos e objetivos financeiros.  
+O **SaaS Finanças** é uma aplicação web para controle financeiro e planejamento de metas. Criado para usuários individuais, freelancers e pequenas empresas, o sistema facilita o gerenciamento de receitas, despesas, orçamentos e objetivos financeiros tendo a possibilidade de compartilhar despesas com alguem ou empresa.  
 
 O projeto segue as boas práticas de desenvolvimento, como a arquitetura **SOLID**, promovendo código modular, organizado e fácil de escalar.
 
