@@ -95,16 +95,16 @@ const BasicReports = ({ data, goalsData }) => {
       {/* Resumo Rápido */}
       <div className="grid grid-cols-3 gap-4 mb-6">
         <div className="bg-green-100 text-green-800 p-4 rounded-lg shadow">
-          <h2 className="text-lg font-bold">Total Income</h2>
+          <h2 className="text-lg font-bold">Receita</h2>
           <p className="text-xl font-semibold">${summary.totalIncome.toFixed(2)}</p>
         </div>
 
         <div className="bg-red-100 text-red-800 p-4 rounded-lg shadow">
-          <h2 className="text-lg font-bold">Total Expenses</h2>
+          <h2 className="text-lg font-bold">Despesas</h2>
           <p className="text-xl font-semibold">${summary.totalExpense.toFixed(2)}</p>
         </div>
         <div className="bg-blue-100 text-blue-800 p-4 rounded-lg shadow">
-          <h2 className="text-lg font-bold">Total Goal</h2>
+          <h2 className="text-lg font-bold">Metas</h2>
           <p className="text-xl font-semibold">
             {`$${summary.totalGoal.toFixed(2)}`}
           </p>
@@ -116,23 +116,23 @@ const BasicReports = ({ data, goalsData }) => {
         {/* Filtro de Categorias */}
         <Dropdown
           options={[
-            { value: "", label: "All Categories" },
+            { value: "", label: "Todas as categorias" },
             ...categories.map((cat) => ({ value: cat, label: cat })),
           ]}
           value={selectedCategory}
           onChange={(value) => setSelectedCategory(value)}
-          placeholder="Filter by Category"
+          placeholder="Filtrar por categoria"
         />
 
         {/* Filtro de Mês */}
         <Dropdown
           options={[
-            { value: "", label: "All Months" },
+            { value: "", label: "Todos os mêses" },
             ...months.map((month) => ({ value: month.raw, label: month.formatted })),
           ]}
           value={selectedMonth}
           onChange={(value) => setSelectedMonth(value)}
-          placeholder="Filter by Month"
+          placeholder="Filtrar por Mês"
         />
       </div>
 

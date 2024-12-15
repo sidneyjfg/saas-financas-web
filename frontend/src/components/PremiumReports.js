@@ -166,15 +166,15 @@ const PremiumReports = ({ data: initialData, goalsData }) => {
 
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
         <div className="bg-green-100 text-green-800 p-4 rounded-lg shadow">
-          <h2 className="text-lg font-bold">Total Income</h2>
+          <h2 className="text-lg font-bold">Receita</h2>
           <p className="text-xl font-semibold">${summary.totalIncome.toFixed(2)}</p>
         </div>
         <div className="bg-red-100 text-red-800 p-4 rounded-lg shadow">
-          <h2 className="text-lg font-bold">Total Expenses</h2>
+          <h2 className="text-lg font-bold">Despesas</h2>
           <p className="text-xl font-semibold">${summary.totalExpenses.toFixed(2)}</p>
         </div>
         <div className="bg-blue-100 text-blue-800 p-4 rounded-lg shadow">
-          <h2 className="text-lg font-bold">Total Goal</h2>
+          <h2 className="text-lg font-bold">Metas</h2>
           <p className="text-xl font-semibold">${summary.totalGoal.toFixed(2)}</p>
         </div>
       </div>
@@ -182,21 +182,21 @@ const PremiumReports = ({ data: initialData, goalsData }) => {
       <div className="grid grid-cols-2 gap-4 mb-4">
         <Dropdown
           options={[
-            { value: "", label: "All Categories" },
+            { value: "", label: "Todas as categorias" },
             ...categories.map((cat) => ({ value: cat, label: cat })),
           ]}
           value={selectedCategory}
           onChange={(value) => setSelectedCategory(value)}
-          placeholder="Filter by Category"
+          placeholder="Filtrar por categorias"
         />
         <Dropdown
           options={[
-            { value: "", label: "All Months" },
+            { value: "", label: "Todos os meses" },
             ...labels.map((label) => ({ value: label, label })),
           ]}
           value={selectedMonth}
           onChange={(value) => setSelectedMonth(value)}
-          placeholder="Filter by Month"
+          placeholder="Filtro por Mês"
         />
       </div>
 
@@ -220,12 +220,12 @@ const PremiumReports = ({ data: initialData, goalsData }) => {
       </div>
 
       <div className="mt-8">
-        <h2 className="text-xl font-bold text-center mb-4">Expenses by Category</h2>
+        <h2 className="text-xl font-bold text-center mb-4">Desepesas por categorias</h2>
         <table className="table-auto w-full bg-white rounded-lg shadow overflow-hidden">
           <thead className="bg-teal-600 text-white">
             <tr>
-              <th className="py-3 px-4 text-left">Category</th>
-              <th className="py-3 px-4 text-left">Percentage</th>
+              <th className="py-3 px-4 text-left">Categoria</th>
+              <th className="py-3 px-4 text-left">Porcentagem</th>
             </tr>
           </thead>
           <tbody>
