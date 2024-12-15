@@ -208,7 +208,7 @@ class TransactionService {
         // Converte e limpa as keywords de cada categoria
         const parsedCategories = categories.map((category) => ({
             ...category,
-            keywords: JSON.parse(category.keywords[0]).map((keyword) => keyword.trim()), // Extrai o conteúdo real das keywords
+            keywords: JSON.parse(category.keywords).map((keyword) => keyword.trim()),
         }));
     
         console.log("Categorias encontradas (após conversão): ", parsedCategories);
