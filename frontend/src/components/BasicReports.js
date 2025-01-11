@@ -59,14 +59,14 @@ const BasicReports = ({ data, goalsData }) => {
 
   const datasets = [
     {
-      label: "Income",
+      label: "Receita",
       data: filteredData.filter((item) => item.type === "income").map((item) => item.total),
       backgroundColor: "rgba(34, 197, 94, 0.7)", // Verde claro
       borderColor: "rgba(34, 197, 94, 1)",
       borderWidth: 1,
     },
     {
-      label: "Expenses",
+      label: "Despesa",
       data: filteredData.filter((item) => item.type === "expense").map((item) => item.total),
       backgroundColor: "rgba(239, 68, 68, 0.7)", // Vermelho claro
       borderColor: "rgba(239, 68, 68, 1)",
@@ -90,7 +90,7 @@ const BasicReports = ({ data, goalsData }) => {
 
   return (
     <div className="p-6">
-      <h1 className="text-3xl font-bold text-center text-gray-800 mb-8">Basic Financial Reports</h1>
+      <h1 className="text-3xl font-bold text-center text-gray-800 mb-8">Relatório de Gastos</h1>
 
       {/* Resumo Rápido */}
       <div className="grid grid-cols-3 gap-4 mb-6">

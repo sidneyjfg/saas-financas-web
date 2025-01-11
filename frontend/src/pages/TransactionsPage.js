@@ -553,8 +553,13 @@ export const TransactionsPage = () => {
                                     <td className="py-4 px-6 text-gray-700 text-sm">
                                         {formatDate(transaction.date)}
                                     </td>
-                                    <td className="py-4 px-6 text-gray-700 text-sm">{transaction.type}</td>
                                     <td className="py-4 px-6 text-gray-700 text-sm">
+                                        {transaction.type === "income"
+                                            ? "Receita"
+                                            : transaction.type === "expense"
+                                                ? "Despesa"
+                                                : transaction.type}
+                                    </td>                                    <td className="py-4 px-6 text-gray-700 text-sm">
                                         {transaction.category?.name || "Sem Categoria"}
                                     </td>
                                     <td className="py-4 px-6 text-gray-700 text-sm">

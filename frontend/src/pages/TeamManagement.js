@@ -226,8 +226,9 @@ export const TeamManagement = () => {
       setExpandedTeamIds((prev) => prev.filter((id) => id !== teamId));
       showSuccessToast("Time removido com sucesso!");
     } catch (error) {
-      console.error("Erro ao remover time:", error);
-      showErrorToast("Erro ao remover o time. Tente novamente.");
+      const errorMessage = error.response?.data?.error;
+      console.error("Erro ao remover time:",);
+      showErrorToast(`Erro ao remover o time: ${errorMessage}.\nTente novamente.`);
     }
 
   };
@@ -289,13 +290,13 @@ export const TeamManagement = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {teams.map((team) => (
           <div
-            key={team.teamId} // Use o ID do time como chave única
+            key={team.id} // Use o ID do time como chave única
             className={`bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition ${expandedTeamIds.includes(team.id) ? "ring-2 ring-teal-600" : ""}`}
           >
             {/* Cabeçalho do Card */}
             <div
               className="flex justify-between items-center cursor-pointer"
-              onClick={() => toggleTeamExpansion(team.teamId)}
+              onClick={() => toggleTeamExpansion(team.id)}
             >
               <div>
                 <h2 className="text-xl font-bold text-teal-600">{team.name}</h2>
@@ -341,7 +342,16 @@ export const TeamManagement = () => {
                     onConfirm: () => removeTeam(team.id),
                   })
                 }
-                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+                disabled={currentUser.role === "member"} // Desativa o botão se for membro
+                className={`flex-1 px-4 py-2 rounded-lg transition ${currentUser.role === "member"
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-red-600 text-white hover:bg-red-700"
+                  }`}
+                title={
+                  currentUser.role === "member"
+                    ? "Você não tem permissão para esta ação"
+                    : undefined
+                } // Exibe o hint se for membro
               >
                 Excluir Time
               </button>

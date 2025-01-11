@@ -101,14 +101,14 @@ const PremiumReports = ({ data: initialData, goalsData }) => {
 
   const datasets = [
     {
-      label: "Income",
+      label: "Receita",
       data: incomeData,
       backgroundColor: "rgba(34, 197, 94, 0.7)",
       borderColor: "rgba(34, 197, 94, 1)",
       borderWidth: 1,
     },
     {
-      label: "Expenses",
+      label: "Despesas",
       data: expenseData,
       backgroundColor: "rgba(239, 68, 68, 0.7)",
       borderColor: "rgba(239, 68, 68, 1)",
@@ -162,7 +162,7 @@ const PremiumReports = ({ data: initialData, goalsData }) => {
 
   return (
     <div className="p-6">
-      <h1 className="text-3xl font-bold text-center text-gray-800 mb-8">Premium Financial Reports</h1>
+      <h1 className="text-3xl font-bold text-center text-gray-800 mb-8">Relatório de Gastos</h1>
 
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
         <div className="bg-green-100 text-green-800 p-4 rounded-lg shadow">

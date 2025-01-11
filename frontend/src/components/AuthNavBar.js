@@ -26,7 +26,7 @@ const AuthNavbar = () => {
                 : "text-sm text-gray-600 hover:text-teal-600 transition duration-300"
             }
           >
-            Reports
+            Relatórios
           </NavLink>
         </li>
         <li>
@@ -38,7 +38,7 @@ const AuthNavbar = () => {
                 : "text-sm text-gray-600 hover:text-teal-600 transition duration-300"
             }
           >
-            Transactions
+            Transações
           </NavLink>
         </li>
         <li>
@@ -50,7 +50,7 @@ const AuthNavbar = () => {
                 : "text-sm text-gray-600 hover:text-teal-600 transition duration-300"
             }
           >
-            Categories
+            Categorias
           </NavLink>
         </li>
         <li>
@@ -62,7 +62,7 @@ const AuthNavbar = () => {
                 : "text-sm text-gray-600 hover:text-teal-600 transition duration-300"
             }
           >
-            Goals
+            Metas
           </NavLink>
         </li>
 
@@ -80,7 +80,7 @@ const AuthNavbar = () => {
                     : "text-sm text-gray-600 hover:text-teal-600 transition duration-300"
                 }
               >
-                Team Management
+                Gestão de Equipe
               </NavLink>
             </li>
             <ul
@@ -91,7 +91,7 @@ const AuthNavbar = () => {
                   to="/team-management/team-goals"
                   className="block px-4 py-2 text-sm text-gray-600 hover:bg-teal-100 hover:text-teal-600"
                 >
-                  Goals & Budgets
+                  Metas e Categorias
                 </NavLink>
               </li>
               <li>
@@ -99,7 +99,7 @@ const AuthNavbar = () => {
                   to="/team-management/audit-logs"
                   className="block px-4 py-2 text-sm text-gray-600 hover:bg-teal-100 hover:text-teal-600"
                 >
-                  Audit Logs
+                  Auditoria
                 </NavLink>
               </li>
               <li>
@@ -107,7 +107,7 @@ const AuthNavbar = () => {
                   to="/team-management/settings"
                   className="block px-4 py-2 text-sm text-gray-600 hover:bg-teal-100 hover:text-teal-600"
                 >
-                  Settings
+                  Configurações
                 </NavLink>
               </li>
             </ul>
@@ -119,7 +119,7 @@ const AuthNavbar = () => {
           onClick={handleLogout}
           className="py-2 px-4 bg-red-600 text-white rounded-lg"
         >
-          Logout
+          Sair
         </button>
       </div>
     </nav>
