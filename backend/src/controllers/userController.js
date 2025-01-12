@@ -1,6 +1,4 @@
 const userService = require("../services/userService.js");
-const { TeamMember } = require("../models/index.js");
-
 class UserController {
   async register(req, res) {
     const { name, email, password, planId } = req.body;
@@ -41,45 +39,6 @@ class UserController {
       return res.status(400).json({ error: "Invalid email or password" });
     }
   }
-
-  async getCurrentUser(req, res) {
-    const user = req.user; // Usuário adicionado pelo middleware 'authenticate'
-    if (!user) {
-      return res.status(401).json({ error: "Usuário não autenticado" });
-    }
-
-    try {
-      let role = null;
-
-      if (user.teamId) {
-        const teamMember = await TeamMember.findOne({
-          where: {
-            teamId: user.teamId,
-            userId: user.id,
-          },
-          attributes: ["role"], // Apenas a role é necessária
-        });
-
-        role = teamMember ? teamMember.role : null;
-      }
-
-      // Adicione um aviso se a role for nula
-      if (user.teamId && !role) {
-        console.warn(`Nenhuma role encontrada para o usuário ${user.id} no time ${user.teamId}`);
-      }
-
-      res.status(200).json({
-        id: user.id,
-        email: user.email,
-        role: role,
-        name: user.name,
-      });
-    } catch (error) {
-      console.error("Erro ao buscar informações do usuário:", error);
-      res.status(500).json({ error: "Erro ao buscar informações do usuário." });
-    }
-  }
-
 
 }
 

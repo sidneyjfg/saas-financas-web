@@ -11,7 +11,7 @@ module.exports = {
       {
         name: "Premium",
         price: 29.99,
-        features: JSON.stringify(["dashboard", "reports", "team_management"]),
+        features: JSON.stringify(["dashboard", "reports"]),
         createdAt: new Date(),
         updatedAt: new Date(),
       },

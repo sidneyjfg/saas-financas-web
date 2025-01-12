@@ -8,14 +8,8 @@ import {
   GoalsPage,
   LoginPage,
   RegisterPage,
-  TeamManagement,
   CategoriesPage,
-  TransactionsPage,
-  TransactionsTeamPage,
-  AuditLogsPage,
-  SettingsPage,
-  TeamGoalsPage,
-  TeamDetailsPage,
+  TransactionsPage
 } from "./pages/";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -65,58 +59,6 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <GoalsPage />
-          </ProtectedRoute>
-        }
-      />
-
-      {/* Rota de Team Management */}
-      <Route
-        path="/team-management"
-        element={
-          <ProtectedRoute requiredPlan="Premium">
-            <TeamManagement />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/team-management/transactions"
-        element={
-          <ProtectedRoute requiredPlan="Premium">
-            <TransactionsTeamPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/team-management/team-details"
-        element={
-          <ProtectedRoute requiredPlan="Premium">
-            <TeamDetailsPage />
-          </ProtectedRoute>
-        }
-      />     
-      
-      <Route
-        path="/team-management/team-goals"
-        element={
-          <ProtectedRoute requiredPlan="Premium">
-            <TeamGoalsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/team-management/audit-logs"
-        element={
-          <ProtectedRoute requiredPlan="Premium">
-            <AuditLogsPage />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/team-management/settings"
-        element={
-          <ProtectedRoute requiredPlan="Premium">
-            <SettingsPage />
           </ProtectedRoute>
         }
       />

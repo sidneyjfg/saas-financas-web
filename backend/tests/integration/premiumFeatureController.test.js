@@ -21,7 +21,7 @@ beforeAll(async () => {
       {
         name: "Premium",
         price: 29.99,
-        features: JSON.stringify(["dashboard", "reports", "team_management"]),
+        features: JSON.stringify(["dashboard", "reports", "notifications"]),
         createdAt: new Date(),
         updatedAt: new Date(),
       },
@@ -43,7 +43,7 @@ describe("Premium Feature Controller", () => {
       id: 1,
       name: "Premium User",
       email: "premium@example.com",
-      plan: { name: "Premium", features: ["team_management"] },
+      plan: { name: "Premium", features: ["notifications"] },
     };
     const token = generateToken(user);
 

@@ -42,7 +42,7 @@ export const RegisterPage = () => {
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-r from-teal-500 via-indigo-500 to-blue-500">
       <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-8">
         <h2 className="text-2xl font-bold text-gray-800 text-center mb-6">
-          Create Your Account
+          Crie sua Conta
         </h2>
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
@@ -50,7 +50,7 @@ export const RegisterPage = () => {
               htmlFor="name"
               className="block text-sm font-medium text-gray-700"
             >
-              Name
+              Nome
             </label>
             <input
               type="text"
@@ -66,7 +66,7 @@ export const RegisterPage = () => {
               htmlFor="email"
               className="block text-sm font-medium text-gray-700"
             >
-              Email Address
+              Email
             </label>
             <input
               type="email"
@@ -82,7 +82,7 @@ export const RegisterPage = () => {
               htmlFor="password"
               className="block text-sm font-medium text-gray-700"
             >
-              Password
+              Senha
             </label>
             <input
               type="password"
@@ -98,7 +98,7 @@ export const RegisterPage = () => {
               htmlFor="planId"
               className="block text-sm font-medium text-gray-700"
             >
-              Select Plan
+              Selecione o Plano
             </label>
             <select
               id="planId"
@@ -106,7 +106,7 @@ export const RegisterPage = () => {
               onChange={handleChange}
               className="w-full px-4 py-2 mt-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
             >
-              <option value={1}>Basic</option>
+              <option value={1}>Basico</option>
               <option value={2}>Premium</option>
             </select>
 
@@ -115,13 +115,13 @@ export const RegisterPage = () => {
             type="submit"
             className="w-full py-2 px-4 text-white bg-teal-600 hover:bg-teal-700 rounded-lg transition duration-300"
           >
-            Sign Up
+            Registre-se
           </button>
         </form>
         <p className="mt-6 text-sm text-center text-gray-600">
-          Already have an account?{" "}
-          <Link to="/login" className="text-teal-600 hover:underline">
-            Sign In
+          Já tem uma conta?{" "}
+          <Link to="/signin" className="text-teal-600 hover:underline">
+            Conecte-se
           </Link>
         </p>
       </div>

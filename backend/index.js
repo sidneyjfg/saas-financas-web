@@ -7,7 +7,6 @@ const categoryRoutes = require('./src/routes/categoryRoutes');
 const transactionRoutes = require('./src/routes/transactionRoutes');
 const premiumFeatureRoutes = require("./src/routes/premiumFeatureRoutes");
 const goalsRoute = require("./src/routes/goalRoute");
-const teamsRoutes = require("./src/routes/teamRoutes");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -41,7 +40,6 @@ app.use("/api/premium-feature", premiumFeatureRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/goals', goalsRoute);
-app.use('/api/teams', teamsRoutes);
 
 // Iniciar servidor apenas se não for ambiente de teste
 if (process.env.NODE_ENV !== 'test') {

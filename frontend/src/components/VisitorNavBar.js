@@ -19,7 +19,7 @@ const VisitorNavbar = () => {
                 : "text-sm text-gray-600 hover:text-teal-600 transition duration-300"
             }
           >
-            Start
+            Inicio
           </NavLink>
         </li>
         <li>
@@ -31,7 +31,7 @@ const VisitorNavbar = () => {
                 : "text-sm text-gray-600 hover:text-teal-600 transition duration-300"
             }
           >
-            About Us
+            Sobre Nós
           </NavLink>
         </li>
         <li>
@@ -43,7 +43,7 @@ const VisitorNavbar = () => {
                 : "text-sm text-gray-600 hover:text-teal-600 transition duration-300"
             }
           >
-            Services
+            Serviços
           </NavLink>
         </li>
         <li>
@@ -55,7 +55,7 @@ const VisitorNavbar = () => {
                 : "text-sm text-gray-600 hover:text-teal-600 transition duration-300"
             }
           >
-            Pricing
+            Planos
           </NavLink>
         </li>
       </ul>
@@ -68,7 +68,7 @@ const VisitorNavbar = () => {
               : "py-2 px-4 bg-gray-200 hover:bg-gray-300 rounded-lg mr-3"
           }
         >
-          Sign In
+          Conectar
         </NavLink>
         <NavLink
           to="/signup"
@@ -78,7 +78,7 @@ const VisitorNavbar = () => {
               : "py-2 px-4 bg-teal-600 text-white hover:bg-teal-700 rounded-lg"
           }
         >
-          Sign Up
+          Registrar
         </NavLink>
       </div>
     </nav>

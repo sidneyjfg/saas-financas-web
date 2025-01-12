@@ -36,7 +36,7 @@ export const CategoriesPage = () => {
             ...category,
             keywords: Array.isArray(category.keywords)
               ? category.keywords.join(", ") // Converte array para string separada por vírgulas
-              : category.keywords.replace(/[\[\]"]/g, "") || "Nenhuma palavra-chave", // Remove colchetes e aspas, ou define texto padrão
+              : category.keywords.replace(/[[\]"]/g, "") || "Nenhuma palavra-chave", // Remove colchetes e aspas, ou define texto padrão
           }))
         );
   
@@ -126,7 +126,7 @@ export const CategoriesPage = () => {
       name: category.name,
       color: category.color || "#000000",
       keywords: category.keywords
-        .replace(/[\[\]"]/g, "") // Remove colchetes e aspas
+        .replace(/[[\]"]/g, "") // Remove colchetes e aspas
         .split(",")
         .join(", "), // Garante espaçamento correto
     });
@@ -156,7 +156,7 @@ export const CategoriesPage = () => {
     <div className="bg-gray-50 min-h-screen py-10">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl font-bold text-teal-600 text-center mb-8">
-          Gerenciamento de Categorias ({userPlan} Plan)
+          Gerenciamento de Categorias
         </h1>
         <p>
           Você tem {remainingCategories > 0 ? remainingCategories : 0} categorias restantes no plano {userPlan}.

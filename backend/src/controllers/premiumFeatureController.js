@@ -2,7 +2,7 @@ class PremiumFeatureController {
   async accessFeature(req, res) {
     try {
       const { plan } = req.user; // Supondo que o middleware `authenticate` adiciona `user` ao `req`
-      if (!plan || !plan.features.includes("team_management")) {
+      if (!plan) {
         return res
           .status(403)
           .json({ error: "Access denied: Plan does not support this feature" });

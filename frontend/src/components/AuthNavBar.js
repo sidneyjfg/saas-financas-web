@@ -3,7 +3,7 @@ import { showSuccessToast } from "../utils/toast";
 import { useAuth } from "../contexts/AuthContext";
 
 const AuthNavbar = () => {
-  const { signOut, userPlan } = useAuth();
+  const { signOut } = useAuth();
   const navigate = useNavigate();
   const handleLogout = () => {
     showSuccessToast("Desconectado com sucesso.");
@@ -65,54 +65,6 @@ const AuthNavbar = () => {
             Metas
           </NavLink>
         </li>
-
-        {/* Menu suspenso de Team Management para usuários Premium */}
-        {userPlan === "Premium" && (
-          <li
-            className="relative group" // Use "group" para gerenciar o hover em todo o contêiner
-          >
-            <li>
-              <NavLink
-                to="/team-management"
-                className={({ isActive }) =>
-                  isActive
-                    ? "text-sm text-teal-600 font-bold transition duration-300"
-                    : "text-sm text-gray-600 hover:text-teal-600 transition duration-300"
-                }
-              >
-                Gestão de Equipe
-              </NavLink>
-            </li>
-            <ul
-              className="absolute left-0 mt-2 w-48 bg-white rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-            >
-              <li>
-                <NavLink
-                  to="/team-management/team-goals"
-                  className="block px-4 py-2 text-sm text-gray-600 hover:bg-teal-100 hover:text-teal-600"
-                >
-                  Metas e Categorias
-                </NavLink>
-              </li>
-              <li>
-                <NavLink
-                  to="/team-management/audit-logs"
-                  className="block px-4 py-2 text-sm text-gray-600 hover:bg-teal-100 hover:text-teal-600"
-                >
-                  Auditoria
-                </NavLink>
-              </li>
-              <li>
-                <NavLink
-                  to="/team-management/settings"
-                  className="block px-4 py-2 text-sm text-gray-600 hover:bg-teal-100 hover:text-teal-600"
-                >
-                  Configurações
-                </NavLink>
-              </li>
-            </ul>
-          </li>
-        )}
       </ul>
       <div className="hidden lg:flex">
         <button

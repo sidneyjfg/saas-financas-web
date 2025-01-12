@@ -20,7 +20,7 @@ beforeAll(async () => {
       {
         name: "Premium",
         price: 29.99,
-        features: JSON.stringify(["dashboard", "reports", "team_management"]),
+        features: JSON.stringify(["dashboard", "reports", "notifications"]),
         createdAt: new Date(),
         updatedAt: new Date(),
       },

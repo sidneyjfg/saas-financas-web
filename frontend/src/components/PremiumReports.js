@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useReport } from "../contexts/ReportContext";
 import { Bar, Pie } from "react-chartjs-2";
 import { Dropdown } from "../components/Dropdown";
+import { formatCurrency } from "../utils/formatCurrency";
 import api from "../services/api";
 import {
   Chart as ChartJS,
@@ -167,15 +168,15 @@ const PremiumReports = ({ data: initialData, goalsData }) => {
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
         <div className="bg-green-100 text-green-800 p-4 rounded-lg shadow">
           <h2 className="text-lg font-bold">Receita</h2>
-          <p className="text-xl font-semibold">${summary.totalIncome.toFixed(2)}</p>
+          <p className="text-xl font-semibold">{formatCurrency(summary.totalIncome.toFixed(2))}</p>
         </div>
         <div className="bg-red-100 text-red-800 p-4 rounded-lg shadow">
           <h2 className="text-lg font-bold">Despesas</h2>
-          <p className="text-xl font-semibold">${summary.totalExpenses.toFixed(2)}</p>
+          <p className="text-xl font-semibold">{formatCurrency(summary.totalExpenses.toFixed(2))}</p>
         </div>
         <div className="bg-blue-100 text-blue-800 p-4 rounded-lg shadow">
           <h2 className="text-lg font-bold">Metas</h2>
-          <p className="text-xl font-semibold">${summary.totalGoal.toFixed(2)}</p>
+          <p className="text-xl font-semibold">{formatCurrency(summary.totalGoal.toFixed(2))}</p>
         </div>
       </div>
 
