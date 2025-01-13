@@ -5,11 +5,11 @@ import { showErrorToast, showInfoToast, showSuccessToast, showWarningToast } fro
 
 const CATEGORY_LIMITS = {
   Basic: 5, // Limite de categorias para o plano básico
-  Premium: Infinity, // Sem limite para o plano Premium
+  Premium: 20, // Sem limite para o plano Premium
 };
 
 export const CategoriesPage = () => {
-  const { userPlan } = useAuth();
+  const { user } = useAuth();
   const [categories, setCategories] = useState([]);
   const [newCategory, setNewCategory] = useState({
     name: "",
@@ -19,18 +19,18 @@ export const CategoriesPage = () => {
   const [editingCategory, setEditingCategory] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const remainingCategories = CATEGORY_LIMITS[userPlan] - categories.length;
+  const remainingCategories = CATEGORY_LIMITS[user?.plan?.name] - categories.length;
 
   // Fetch categories from backend
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         const endpoint =
-          userPlan === "Basic" ? "/categories/basic" : "/categories/premium";
+          user?.plan?.name === "Basic" ? "/categories/basic" : "/categories/premium";
         const response = await api.get(endpoint);
-  
+
         const categoriesData = Array.isArray(response.data) ? response.data : [];
-  
+
         setCategories(
           categoriesData.map((category) => ({
             ...category,
@@ -39,7 +39,7 @@ export const CategoriesPage = () => {
               : category.keywords.replace(/[[\]"]/g, "") || "Nenhuma palavra-chave", // Remove colchetes e aspas, ou define texto padrão
           }))
         );
-  
+
         if (categoriesData.length === 0) {
           showInfoToast("Nenhuma categoria encontrada.");
         } else {
@@ -52,12 +52,12 @@ export const CategoriesPage = () => {
         setLoading(false);
       }
     };
-  
+
     fetchCategories();
-  }, [userPlan]);
-  
-  
-  
+  }, [user?.plan?.name]);
+
+
+
 
   // Create or Update Category
   const handleSaveCategory = async () => {
@@ -121,7 +121,7 @@ export const CategoriesPage = () => {
       showErrorToast("Categoria inválida para edição.");
       return;
     }
-  
+
     setNewCategory({
       name: category.name,
       color: category.color || "#000000",
@@ -159,7 +159,7 @@ export const CategoriesPage = () => {
           Gerenciamento de Categorias
         </h1>
         <p>
-          Você tem {remainingCategories > 0 ? remainingCategories : 0} categorias restantes no plano {userPlan}.
+          Você tem {remainingCategories > 0 ? remainingCategories : 0} categorias restantes no plano {user?.plan?.name}.
         </p>
         {/* Form */}
         <div className="bg-white p-6 shadow-lg rounded-lg mb-10">

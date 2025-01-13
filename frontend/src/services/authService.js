@@ -21,7 +21,7 @@ export const register = async (name, email, password, planId) => {
 
 export const logout = () => {
   localStorage.removeItem("token");
-  localStorage.removeItem("userPlan"); // Remova o plano ao deslogar
+  localStorage.removeItem("user"); // Remova o plano ao deslogar
 };
 
 export const getCurrentUser = async () => {

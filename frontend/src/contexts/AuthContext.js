@@ -1,21 +1,21 @@
 import { createContext, useState, useContext, useEffect } from "react";
-import api from "../services/api"; // Certifique-se de que este arquivo exporta o Axios configurado
+import api from "../services/api";
 
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userPlan, setUserPlan] = useState(null);
+  const [user, setUser] = useState(null); // Armazena os dados completos do usuário
 
   const signIn = async (email, password) => {
     try {
-      const response = await api.post("/users/login", { email, password }); // Chama o backend
-      const { token, plan } = response.data; // Extrai token e plano da resposta
+      const response = await api.post("/users/login", { email, password });
+      const { token, user } = response.data;
 
       setIsAuthenticated(true);
-      setUserPlan(plan);
-      localStorage.setItem("token", token); // Salva no localStorage
-      localStorage.setItem("userPlan", plan);
+      setUser(user); // Armazena os dados completos do usuário
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(user)); // Salva os dados no localStorage
     } catch (error) {
       console.error("Login failed:", error.response?.data || error.message);
       throw new Error(error.response?.data?.error || "Login failed");
@@ -23,24 +23,23 @@ export const AuthProvider = ({ children }) => {
   };
 
   const signOut = () => {
-    console.log("Signing out");
     setIsAuthenticated(false);
-    setUserPlan(null);
+    setUser(null);
     localStorage.removeItem("token");
-    localStorage.removeItem("userPlan");
+    localStorage.removeItem("user");
   };
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    const plan = localStorage.getItem("userPlan");
-    if (token && plan) {
+    const storedUser = localStorage.getItem("user");
+    if (token && storedUser) {
       setIsAuthenticated(true);
-      setUserPlan(plan);
+      setUser(JSON.parse(storedUser)); // Carrega os dados do usuário do storage
     }
   }, []);
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, userPlan, signIn, signOut }}>
+    <AuthContext.Provider value={{ isAuthenticated, user, signIn, signOut }}>
       {children}
     </AuthContext.Provider>
   );

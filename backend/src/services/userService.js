@@ -59,7 +59,10 @@ class UserService {
         id: user.id,
         name: user.name,
         email: user.email,
-        plan: plan.name,
+        plan: {
+          id: plan.id,
+          name: plan.name // Certifique-se de que isso é "Premium"
+        },
       },
     };
   }

@@ -13,7 +13,7 @@ const monthNames = [
 ];
 
 export const TransactionsPage = () => {
-    const { userPlan } = useAuth(); // Recupera o plano do usuário
+    const { user } = useAuth(); // Recupera o plano do usuário
     const [transactions, setTransactions] = useState([]);
     const [selectedTransactions, setSelectedTransactions] = useState([]); // Armazena os IDs selecionados
     const [categories, setCategories] = useState([]);
@@ -66,7 +66,7 @@ export const TransactionsPage = () => {
 
     const handleDeleteAllTransactions = async () => {
         // Obtém o userId da primeira transação
-        const userId = transactions?.length > 0 ? transactions[0].userId : null;
+        const userId = user.id;
 
         if (!userId) {
             showWarningToast("ID do usuário não foi encontrado.");
@@ -109,7 +109,7 @@ export const TransactionsPage = () => {
                 setLoading(true);
 
                 const categoryEndpoint =
-                    userPlan === "Basic" ? "/categories/basic" : "/categories/premium";
+                    user?.plan?.name === "Basic" ? "/categories/basic" : "/categories/premium";
                 const categoriesResponse = await api.get(categoryEndpoint);
                 setCategories(categoriesResponse.data);
 
@@ -123,7 +123,7 @@ export const TransactionsPage = () => {
         };
 
         fetchData();
-    }, [userPlan]);
+    }, [user?.plan?.name]);
 
     // Salvar ou Atualizar Transação
     const handleSaveTransaction = async () => {
@@ -383,7 +383,7 @@ export const TransactionsPage = () => {
                         </button>
 
                         {/* Botão de Importar CSV */}
-                        {userPlan === "Premium" && (
+                        {user?.plan?.name === "Premium" && (
                             <label className="cursor-pointer">
                                 <input
                                     type="file"

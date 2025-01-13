@@ -22,7 +22,7 @@ export const PricingPage = () => {
           <h2 className="text-3xl font-bold text-teal-600 mb-12">
             Planos Disponíveis
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
             {/* Plano Básico */}
             <div className="p-6 bg-white shadow-lg rounded-lg transform hover:scale-105 transition-transform duration-300">
               <h3 className="text-xl font-bold mb-3 text-gray-700">Básico</h3>
@@ -39,10 +39,10 @@ export const PricingPage = () => {
               </button>
             </div>
 
-            {/* Plano Profissional */}
+            {/* Plano Premium */}
             <div className="p-6 bg-white shadow-lg rounded-lg transform hover:scale-105 transition-transform duration-300">
               <h3 className="text-xl font-bold mb-3 text-gray-700">
-                Profissional
+                Premium
               </h3>
               <p className="text-gray-500 mb-4">R$ 49,90/mês.</p>
               <ul className="text-gray-500 mb-6 text-left">
@@ -53,27 +53,6 @@ export const PricingPage = () => {
                 <li>- Gestão de até 20 categorias</li>
                 <li>- Até 10 metas financeiras</li>
                 <li>- Suporte via e-mail</li>
-              </ul>
-              <button className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700">
-                Escolher
-              </button>
-            </div>
-
-            {/* Plano Empresarial */}
-            <div className="p-6 bg-white shadow-lg rounded-lg transform hover:scale-105 transition-transform duration-300">
-              <h3 className="text-xl font-bold mb-3 text-gray-700">
-                Empresarial
-              </h3>
-              <p className="text-gray-500 mb-4">R$ 129,90/mês.</p>
-              <ul className="text-gray-500 mb-6 text-left">
-                <li>- Dashboards avançados para equipes</li>
-                <li>- Relatórios detalhados e personalizáveis</li>
-                <li>- Metas ilimitadas</li>
-                <li>- Categorias ilimitadas</li>
-                <li>- Importação de relatórios bancários (CSV/Excel)</li>
-                <li>- Acesso ao Team Manager (gestão de equipe)</li>
-                <li>- Notificações de eventos importantes (Metas e despesas individual e em grupo)</li>
-                <li>- Suporte prioritário (e-mail e chat)</li>
               </ul>
               <button className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700">
                 Escolher

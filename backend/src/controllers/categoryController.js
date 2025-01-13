@@ -40,7 +40,7 @@ class CategoryController {
     const userId = req.user.id;
     const userPlan = req.user.plan;
     const { name, color, keywords } = req.body;
-  
+    console.log("OIOIOIOIOIOOI: ",userPlan);
     if (!name) {
       return res.status(400).json({ message: "O nome da categoria é obrigatório." });
     }

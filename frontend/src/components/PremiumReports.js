@@ -221,11 +221,12 @@ const PremiumReports = ({ data: initialData, goalsData }) => {
       </div>
 
       <div className="mt-8">
-        <h2 className="text-xl font-bold text-center mb-4">Desepesas por categorias</h2>
+        <h2 className="text-xl font-bold text-center mb-4">Despesas por Categorias</h2>
         <table className="table-auto w-full bg-white rounded-lg shadow overflow-hidden">
           <thead className="bg-teal-600 text-white">
             <tr>
               <th className="py-3 px-4 text-left">Categoria</th>
+              <th className="py-3 px-4 text-left">Total de Despesas</th>
               <th className="py-3 px-4 text-left">Porcentagem</th>
             </tr>
           </thead>
@@ -239,6 +240,7 @@ const PremiumReports = ({ data: initialData, goalsData }) => {
               return (
                 <tr key={category} className={`${index % 2 === 0 ? "bg-gray-50" : "bg-white"}`}>
                   <td className="py-3 px-4">{category}</td>
+                  <td className="py-3 px-4">{formatCurrency(totalCategoryExpense)}</td>
                   <td className="py-3 px-4">{percentage}%</td>
                 </tr>
               );

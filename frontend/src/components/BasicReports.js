@@ -148,6 +148,7 @@ const BasicReports = ({ data, goalsData }) => {
           <thead>
             <tr className="bg-teal-600 text-white">
               <th className="py-4 px-6 text-left text-sm font-bold uppercase tracking-wider">Categoria</th>
+              <th className="py-4 px-6 text-left text-sm font-bold uppercase tracking-wider">Total de Despesas</th>
               <th className="py-4 px-6 text-left text-sm font-bold uppercase tracking-wider">Total de Despesas (%)</th>
             </tr>
           </thead>
@@ -166,6 +167,9 @@ const BasicReports = ({ data, goalsData }) => {
                     } hover:bg-teal-100 transition-colors duration-200`}
                 >
                   <td className="py-4 px-6 text-gray-700 text-sm font-medium">{category}</td>
+                  <td className="py-4 px-6 text-gray-700 text-sm">
+                    {formatCurrency(totalCategoryExpense.toFixed(2))}
+                  </td>
                   <td className="py-4 px-6 text-gray-700 text-sm">
                     {isNaN(percentage) || summary.totalExpense === 0 ? "0.00%" : `${percentage}%`}
                   </td>

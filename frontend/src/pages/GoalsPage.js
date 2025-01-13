@@ -7,7 +7,7 @@ import { Dropdown } from "../components/Dropdown"; // Supondo que o componente D
 
 export const GoalsPage = () => {
   const [goals, setGoals] = useState([]);
-  const { userPlan } = useAuth(); // Recupera o plano do usuário
+  const { user } = useAuth(); // Recupera o plano do usuário
   const [categories, setCategories] = useState([]);
   const [newGoal, setNewGoal] = useState({
     name: '',
@@ -29,7 +29,7 @@ export const GoalsPage = () => {
 
         // Carrega categorias para vincular às metas
         const endpoint =
-          userPlan === "Basic" ? "/categories/basic" : "/categories/premium"; // Diferencia endpoint por plano
+          user?.plan?.name === "Basic" ? "/categories/basic" : "/categories/premium"; // Diferencia endpoint por plano
         const categoriesResponse = await api.get(endpoint);
         setCategories(categoriesResponse.data);
       } catch (error) {
@@ -39,7 +39,7 @@ export const GoalsPage = () => {
       }
     };
     fetchData();
-  }, [userPlan]);
+  }, [user?.plan?.name]);
 
   const handleSaveGoal = async () => {
     try {

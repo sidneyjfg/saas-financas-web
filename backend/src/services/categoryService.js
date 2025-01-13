@@ -1,7 +1,7 @@
 const categoryRepository = require('../repositories/categoryRepository');
 const CATEGORY_LIMITS = {
   Basic: 5, // Limite de 5 categorias para o plano Basic
-  Premium: Infinity, // Sem limite para o plano Premium
+  Premium: 20, // Sem limite para o plano Premium
 };
 
 class CategoryService {

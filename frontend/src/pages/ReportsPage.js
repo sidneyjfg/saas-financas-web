@@ -23,7 +23,7 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 
 export const ReportsPage = () => {
   const { shouldReload, resetReload } = useReport(); // Contexto para atualização
-  const { userPlan } = useAuth();
+  const { user } = useAuth(); // Obtém o usuário do contexto
   const navigate = useNavigate();
   const [reportData, setReportData] = useState([]); // Inicializa como array vazio
   const [goals, setGoals] = useState([]); // Inicializa como array vazio
@@ -33,7 +33,7 @@ export const ReportsPage = () => {
     try {
       setLoading(true);
       const reportEndpoint =
-        userPlan === "Basic" ? "/transactions/monthly" : "/transactions/premium/summary";
+        user?.plan?.name === "Basic" ? "/transactions/monthly" : "/transactions/premium/summary";
       const reportResponse = await api.get(reportEndpoint);
 
       const reportArray = Array.isArray(reportResponse.data) ? reportResponse.data : [];
@@ -48,13 +48,13 @@ export const ReportsPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [userPlan]); // Memoriza a função com base no plano do usuário
+  }, [user?.plan.name]); // Memoriza a função com base no plano do usuário
 
   useEffect(() => {
-    if (!userPlan) {
+    if (!user?.plan?.name) {
       navigate("/signin");
     }
-  }, [userPlan, navigate]);
+  }, [user?.plan?.name, navigate]);
 
   // Recarregar dados ao montar o componente
   useEffect(() => {
@@ -72,7 +72,7 @@ export const ReportsPage = () => {
   const handleExportCSV = async () => {
     try {
       const endpoint =
-        userPlan === "Basic" ? "/transactions/basic/export" : "/transactions/premium/export";
+        user?.plan?.name === "Basic" ? "/transactions/basic/export" : "/transactions/premium/export";
       const response = await api.get(endpoint, { responseType: "blob" });
       showSuccessToast("Transações exportadas com sucesso!");
       const url = window.URL.createObjectURL(new Blob([response.data]));
@@ -101,7 +101,7 @@ export const ReportsPage = () => {
       <div className="flex flex-col md:flex-row w-full max-w-8xl bg-white rounded-lg shadow-lg p-6 gap-6">
         {/* Coluna de Relatórios */}
         <div className="flex-1">
-          {userPlan === "Premium" ? (
+          {user?.plan?.name === "Premium" ? (
             <PremiumReports data={reportData} goalsData={goals} />
           ) : (
             <BasicReports data={reportData} goalsData={goals} />

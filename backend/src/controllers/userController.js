@@ -20,7 +20,6 @@ class UserController {
   }
 
   async login(req, res) {
-
     const { email, password } = req.body;
 
     if (!email || !password) {
@@ -31,14 +30,16 @@ class UserController {
       const result = await userService.login({ email, password });
 
       return res.status(200).json({
-        token: result.token, // Certifique-se de que o token está aqui
-        plan: result.user.plan, // Certifique-se de que o plano está aqui
+        token: result.token,
+        user: result.user, // Certifique-se de que `result.user.plan` está correto
       });
+
     } catch (error) {
       console.error("Login failed:", error.message);
       return res.status(400).json({ error: "Invalid email or password" });
     }
   }
+
 
 }
 
